@@ -25,7 +25,7 @@ const int scrollLongDelay = 3 * 1000;   // time to pause at initial position bef
    1 --> 'long': How many sprays for a long toilet visit
 */
 int currentSetting, currentValue;
-const int maxConfig = 5, minConfig = 1;     // bounds for all settings
+const int maxConfig = 5, minConfig = 0;     // bounds for all settings
 const int configDelay = 30 * 1000;          // 30 seconds, then leaves menu or config state
 int sprayConfigList[2] = { 1, 2 };          // default settings
 const String sprayConfigDesc[2] = { "Sprays na kort bezoek", "Sprays na lang bezoek" };
@@ -65,7 +65,7 @@ void updateBottomText() {
 }
 
 // prints text at one position based on scrollIndex
-void updateAllText() {
+void updateTextScroll() {
   lcd.setCursor(0, 0);
   int x = scrollIndex;
   for (int i = 0; i < 16; i++) {
@@ -76,7 +76,7 @@ void updateAllText() {
 }
 
 // updates scrollIndex whenever the delay expires
-void printTextLoop(unsigned long curTime) {
+void scrollTextLoop(unsigned long curTime) {
   // only scroll if the text doesn't fit
   if (topText.length() > 16 + spaceBetweenScrolls) { // +x because we added x whitespace
     // pause a while longer if front of text is currently displayed
@@ -84,14 +84,14 @@ void printTextLoop(unsigned long curTime) {
       if (compareTimestamps(curTime, scrollTimestamp + scrollLongDelay)) {
         scrollIndex = scrollIndex + positionsPerScroll;
         scrollTimestamp = millis();
-        updateAllText();
+        updateTextScroll();
       }
     } else {
       if (compareTimestamps(curTime, scrollTimestamp + scrollShortDelay)) {
         scrollIndex = scrollIndex + positionsPerScroll;
         if (scrollIndex >= topText.length()) scrollIndex = 0;
         scrollTimestamp = millis();
-        updateAllText();
+        updateTextScroll();
       }
     }
   }
@@ -112,10 +112,9 @@ void changeState(int newState) {
         lcd.clear();
         break;
       case 1:
-        // TODO implement display state (show temperature?)
         powerBacklight(true);
-        topText = "Display state";
-        bottomText = "";
+        topText = "Temperature: " + String(temperature());
+        bottomText = "(click for menu)";
         lcd.clear();
         setText();
         break;
@@ -221,7 +220,7 @@ void activateScreen() {
 // the menu update loop called each tick
 void menuLoop(unsigned long curTime) {
   // handles scrolling of text if necessary
-  printTextLoop(curTime);
+  scrollTextLoop(curTime);
 
   // go back to display state if bathroom is unused AND display is inactive for too long
   if (menuState == 1) {

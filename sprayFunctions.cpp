@@ -54,6 +54,7 @@ void startSpray() {
     Serial.println("Remaining sprays set to: " + String(spraysLeft));
   } else {
     spraying = true;
+    // TODO EEPROM UPDATE LOGIC HERE
     // TODO SPRAY ENABLE LOGIC HERE
     sprayTimestamp = millis();
     Serial.println("Spray started! Sprays left: " + String(spraysLeft));

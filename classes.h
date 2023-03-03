@@ -16,7 +16,7 @@ class Knop {
     unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
 
   public:
-    Knop(int low, int high);
+    Knop(int l, int h);
     bool pressed = false;
     bool changed = false;
     void update(int volt, unsigned long curTime);

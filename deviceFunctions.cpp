@@ -18,6 +18,10 @@ bool deviceIsIdle() {
   return (deviceState == 0);
 }
 
+int temperature() {
+  return 0;
+}
+
 void setSpraysShort(int newAmount) {
   //
 }
