@@ -22,7 +22,7 @@ void Knop::update(int volt, unsigned long curTime) {
   }
 
   //compare last time button is pressed, skip if too fast (this is debounce part)
-  if (compareTimestamps(curTime, lastDebounceTime + debounceDelay)) {
+  if (compareTimestamps(curTime, lastDebounceTime, debounceDelay)) {
     //if the buttonstate has changed, update buttonState
     if (reading != buttonState) {
       buttonState = reading;

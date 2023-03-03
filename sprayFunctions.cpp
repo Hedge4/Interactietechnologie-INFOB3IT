@@ -26,7 +26,7 @@ int spraysLeftAddr;
 void sprayLoop(unsigned long curTime) {
   if (spraying) {
     // stop spraying if we've reached sprayDuration
-    if (compareTimestamps(curTime, sprayTimestamp + sprayDuration)) {
+    if (compareTimestamps(curTime, sprayTimestamp, sprayDuration)) {
       spraying = false;
       waiting = true;
       // SPRAY DISABLE LOGIC HERE
@@ -35,7 +35,7 @@ void sprayLoop(unsigned long curTime) {
     }
   } else if (waiting) {
     // stop waiting if we've reached pauseDuration
-    if (compareTimestamps(curTime, sprayTimestamp + pauseDuration)) {
+    if (compareTimestamps(curTime, sprayTimestamp, pauseDuration)) {
       waiting = false;
       if (plannedSpraysLeft > 0) {
         plannedSpraysLeft--;

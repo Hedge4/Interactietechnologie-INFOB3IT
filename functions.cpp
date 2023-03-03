@@ -1,14 +1,15 @@
 #include "functions.h"
 
 
-/////////////////////////////////////////
-// TIMESTAMP/ROLLOVER CHECKER FUNCTION //
-/////////////////////////////////////////
+//////////////////////////////////////////////
+// ROLLOVER SAFE TIMESTAMP COMPARE FUNCTION //
+//////////////////////////////////////////////
 
 // 1 day in milliseconds, UL to prevent int overflow
 unsigned long maxDifference = 1UL * 24 * 3600 * 1000;
 
 // return if timestampA is later in time than timestampB, taking rollover of millis() into account
+// only use this if you don't know the order of these timestamps, otherwise use function below
 bool compareTimestamps(unsigned long timestampA, unsigned long timestampB) {
   /*
     If both or neither values rolled over, we have no problem comparing them. This means that we
@@ -38,4 +39,15 @@ bool compareTimestamps(unsigned long timestampA, unsigned long timestampB) {
       return false;
     }
   }
+}
+
+
+///////////////////////////////////////////
+// ROLLOVER SAFE INTERVAL ELAPSED TESTER //
+///////////////////////////////////////////
+
+// return if, after timestamp, interval has elapsed. Only works if curTime >= timestamp, rollover doesn't matter for this.
+// for two timestamps of unknown order, use the function above
+bool compareTimestamps(unsigned long currentTime, unsigned long timestamp, unsigned long interval) {
+  return (currentTime - timestamp >= interval);
 }

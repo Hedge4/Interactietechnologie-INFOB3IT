@@ -80,13 +80,13 @@ void scrollTextLoop(unsigned long curTime) {
   if (topText.length() > 16 + spaceBetweenScrolls) { // +x because we added x whitespace
     // pause a while longer if front of text is currently displayed
     if (scrollIndex == 0) {
-      if (compareTimestamps(curTime, scrollTimestamp + scrollLongDelay)) {
+      if (compareTimestamps(curTime, scrollTimestamp, scrollLongDelay)) {
         scrollIndex = scrollIndex + positionsPerScroll;
         scrollTimestamp = millis();
         updateTextScroll();
       }
     } else {
-      if (compareTimestamps(curTime, scrollTimestamp + scrollShortDelay)) {
+      if (compareTimestamps(curTime, scrollTimestamp, scrollShortDelay)) {
         scrollIndex = scrollIndex + positionsPerScroll;
         if (scrollIndex >= topText.length()) scrollIndex = 0;
         scrollTimestamp = millis();
@@ -251,14 +251,14 @@ void menuLoop(unsigned long curTime) {
 
   if (menuState == 1) {
     // turn display off if bathroom is unused AND display is inactive for too long
-    if (compareTimestamps(curTime, menuTimestamp + configDelay)) {
+    if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
       if (deviceIsIdle()) {
         changeMenuState(0);
       }
     }
 
     // if info on the display changed, update text
-    if (compareTimestamps(curTime, displayRefreshTimestamp + displayRefreshDelay)) {
+    if (compareTimestamps(curTime, displayRefreshTimestamp, displayRefreshDelay)) {
       displayRefreshTimestamp = curTime;
       String newBottomText = displayStateBottomText();
       String newTopText = displayStateTopText();
@@ -278,7 +278,7 @@ void menuLoop(unsigned long curTime) {
 
   // from settings or config state, go back to display state if inactive for too long
   if (menuState == 2 || menuState == 3) {
-    if (compareTimestamps(curTime, menuTimestamp + configDelay)) {
+    if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
       changeMenuState(1);
     }
   }
