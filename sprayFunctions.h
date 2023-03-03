@@ -11,6 +11,11 @@ void startSpray(int amount);
 void startSpray();
 void cancelSprays();
 void sprayButtonUpdate(bool pressed);
+void spraysLeftSetup(int eeAddress, int value);
+
+// getters
+extern int spraysLeft;
+bool sprayComing();
 
 
 #endif /*SPRAYFUNCTIONS_H*/

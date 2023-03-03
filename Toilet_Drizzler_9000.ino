@@ -30,6 +30,38 @@ void setup() {
   // for logging purposes
   Serial.begin(9600);
 
+  // get relevant memory from EEPROM
+  const int spraysLeftAddress = 0;
+  const int spraysShortAddress = 0;
+  const int spraysLongAddress = 0;
+  const int spraysShortDelayAddress = 0;
+  const int spraysLongDelayAddress = 0;
+
+  // TODO EEPROM read logic here
+  int spraysLeft = 2400;
+  int spraysShort = 1;
+  int spraysLong = 2;
+  int spraysShortDelay = 5000;
+  int spraysLongDelay = 5000;
+
+  // TODO check if data is valid (not 255), or set to default
+  spraysLeft = ( false ) ? 2400 : spraysLeft;
+  spraysShort = ( false ) ? 1 : spraysShort;
+  spraysLong = ( false ) ? 2 : spraysLong;
+  spraysShortDelay = ( false ) ? 5000 : spraysShortDelay;
+  spraysLongDelay = ( false ) ? 5000 : spraysLongDelay;
+
+  // save eeAddress and value for how many sprays the device has left
+  spraysLeftSetup(spraysLeftAddress, spraysLeft);
+  // save eeAddress and value for how many sprays after a short visit
+  spraysShortSetup(spraysShortAddress, spraysShort);
+  // save eeAddress and value for how many sprays after a long visit
+  spraysLongSetup(spraysLongAddress, spraysLong);
+  // save eeAddress and value for how long the device should wait before spraying after a short visit
+  spraysShortDelaySetup(spraysShortDelayAddress, spraysShortDelay);
+  // save eeAddress and value for how long the device should wait before spraying after a long visit
+  spraysLongDelaySetup(spraysLongDelayAddress, spraysLongDelay);
+
   // activate the LCD display (display state)
   activateScreen();
 }

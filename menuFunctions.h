@@ -12,5 +12,7 @@ void activateScreen();
 void menuButtonUpdate(bool pressed);
 void okButtonUpdate(bool pressed);
 
+bool menuActive();
+
 
 #endif /*MENUFUNCTIONS_H*/
