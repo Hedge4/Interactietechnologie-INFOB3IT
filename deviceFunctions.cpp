@@ -57,6 +57,8 @@ void changeDeviceState(int newState) {
   }
 }
 
+//WORK IN PROGRESS
+
 //check light sensor
 int lightLevelCheck() {
   int lightReading = analogRead(ldrPin);
@@ -65,7 +67,7 @@ int lightLevelCheck() {
 
 //check magnetic sensor
 //if door is closed, magnet will output LOW
-bool doorIsOPEN(){
+bool doorIsOpen(){
   int doorState = digitalRead(magneticSensorPin);
   if(doorState == HIGH) {
     return true;
@@ -143,7 +145,16 @@ bool deviceIsIdle() {
 
 // loops from 0-9 for now
 int temperature() {
-  return (int)(millis() / 1000 % 10);
+    sensors.requestTemperatures(); // Send the command to get temperatures
+    float tempC = sensors.getTempCByIndex(0);
+    // Check if reading was successful
+    if(tempC != DEVICE_DISCONNECTED_C) 
+    {
+      return (int)tempC;
+    }
+    else{
+      return 0;
+    }
 }
 
 String deviceStateString() {
@@ -172,6 +183,7 @@ void deviceLoop(unsigned long curTime) {
 
 }
 
+//WORK IN PROGRESS
 
 //when bathroom is not in use, the system will stay idle untill the door is opened
 void deviceIdleLoop(unsigned long curTime){
@@ -195,8 +207,6 @@ void deviceDetectionLoop(unsigned long curTime){
   };
 
   //check if door is back closed again
-  doorClosed = doorCheck();
-
 
 }
 

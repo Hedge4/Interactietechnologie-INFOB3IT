@@ -43,3 +43,13 @@ void Knop::update(int volt, unsigned long curTime) {
 }
 
 
+
+
+
+
+
+
+
+
+
+

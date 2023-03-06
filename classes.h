@@ -24,5 +24,4 @@ class Knop {
 
 
 
-
 #endif /*CLASSES_H*/

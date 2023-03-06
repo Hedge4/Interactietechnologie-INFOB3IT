@@ -8,17 +8,28 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // other pins
-const int buttonsPin = A5;
+const int buttonsPin = A5;      //magnetic sensor also connected along this
 const int lcdBacklightPin = A4;
 const int ldrPin = A0;
-const int motionSensorPin = 13;
-const int magneticSensorPin = 8;
+const int motionSensorPin = 13; //also connected to built-in led, needs testing
+const int distPin = 8;          //only one pin needed thanks to newPing library
+const int temperaturePin = 7;          
+
+//initialise sonar for distance sensor
+NewPing sonar(distPin, distPin, 200);
+
+//initialse temperature pin workings
+OneWire oneWire(temperaturePin);
+DallasTemperature sensors(&oneWire);
 
 
 // set up our buttons, value of 1023 means no button is pressed
-Knop menuButton = Knop(0, 10);   // value of ~0
-Knop okButton = Knop(501, 521);   // value of 1023 * 1/2 = ~511
-Knop sprayButton = Knop(672, 692);   // value of 1023 * 2/3 = ~682
+Knop menuButton(0, 10);   // value of ~0
+Knop okButton(501, 521);   // value of 1023 * 1/2 = ~511
+Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
+
+//connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
+Knop magneticSensor(758,778);  //value of 1023 * 3/4 = ~768
 
 //set up our button-like sensors
 
@@ -31,10 +42,12 @@ void setup() {
   pinMode(buttonsPin, INPUT);
   pinMode(motionSensorPin, INPUT);
   pinMode(ldrPin, INPUT);
-  pinMode(magneticSensorPin, INPUT);
+  //no configuring needed for distance sensor (no downsides encountered whilst testing)
 
   // configure our output pins
-  pinMode(lcdBacklightPin, OUTPUT);  
+  pinMode(lcdBacklightPin, OUTPUT);
+
+
 
   // for logging purposes
   Serial.begin(9600);
@@ -82,6 +95,8 @@ void loop() {
 
   alwaysUpdate(curTime);
   alwaysRun(curTime);
+
+  distTest();
 }
 
 
