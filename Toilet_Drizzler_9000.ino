@@ -16,6 +16,7 @@ const int distPin = 8;          //only one pin needed thanks to newPing library
 const int temperaturePin = 7;          
 
 //initialise sonar for distance sensor
+//get distance with sonar.ping_cm, if not in max distance returns 0, is blocking!
 NewPing sonar(distPin, distPin, 200);
 
 //initialse temperature pin workings
@@ -96,7 +97,6 @@ void loop() {
   alwaysUpdate(curTime);
   alwaysRun(curTime);
 
-  distTest();
 }
 
 
@@ -129,6 +129,8 @@ void alwaysRun(unsigned long curTime) {
     sprayButtonUpdate(sprayButton.pressed);
   }
 }
+
+
 
 
 

@@ -59,6 +59,7 @@ void changeDeviceState(int newState) {
 
 //WORK IN PROGRESS
 
+/*
 //check light sensor
 int lightLevelCheck() {
   int lightReading = analogRead(ldrPin);
@@ -85,6 +86,7 @@ int distanceCheck(){
 void makeDetection(){
   return;
 }
+*/
 
 //////////////////////////
 //  EXTERNAL FUNCTIONS  //
@@ -184,7 +186,7 @@ void deviceLoop(unsigned long curTime) {
 }
 
 //WORK IN PROGRESS
-
+/*
 //when bathroom is not in use, the system will stay idle untill the door is opened
 void deviceIdleLoop(unsigned long curTime){
   if(doorIsOpen()){
@@ -209,7 +211,7 @@ void deviceDetectionLoop(unsigned long curTime){
   //check if door is back closed again
 
 }
-
+*/
 
 
 
