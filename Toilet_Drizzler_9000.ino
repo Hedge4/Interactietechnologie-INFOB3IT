@@ -10,11 +10,17 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 // other pins
 const int buttonsPin = A5;
 const int lcdBacklightPin = A4;
+const int ldrPin = A0;
+const int motionSensorPin = 13;
+const int magneticSensorPin = 8;
+
 
 // set up our buttons, value of 1023 means no button is pressed
 Knop menuButton = Knop(0, 10);   // value of ~0
 Knop okButton = Knop(501, 521);   // value of 1023 * 1/2 = ~511
 Knop sprayButton = Knop(672, 692);   // value of 1023 * 2/3 = ~682
+
+//set up our button-like sensors
 
 
 void setup() {
@@ -23,9 +29,12 @@ void setup() {
 
   // configure our input pins
   pinMode(buttonsPin, INPUT);
+  pinMode(motionSensorPin, INPUT);
+  pinMode(ldrPin, INPUT);
+  pinMode(magneticSensorPin, INPUT);
 
   // configure our output pins
-  pinMode(lcdBacklightPin, OUTPUT);
+  pinMode(lcdBacklightPin, OUTPUT);  
 
   // for logging purposes
   Serial.begin(9600);
@@ -80,9 +89,11 @@ void loop() {
 void alwaysUpdate(unsigned long curTime) {
   int buttonStatus = analogRead(buttonsPin);
 
+  //ODO add in update functions deviceStateChange to 'menu in use'
   menuButton.update(buttonStatus, curTime);
   okButton.update(buttonStatus, curTime);
   sprayButton.update(buttonStatus, curTime);
+
 }
 
 
@@ -103,3 +114,12 @@ void alwaysRun(unsigned long curTime) {
     sprayButtonUpdate(sprayButton.pressed);
   }
 }
+
+
+
+
+
+
+
+
+

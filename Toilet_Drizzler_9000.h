@@ -10,7 +10,7 @@
 
 
 extern LiquidCrystal lcd;
-extern const int lcdBacklightPin;
+extern const int lcdBacklightPin, ldrPin, motionSensorPin, magneticSensorPin;
 
 
 #endif /*TOILET_DRIZZLER_9000_H*/

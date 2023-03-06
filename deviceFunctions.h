@@ -2,6 +2,7 @@
 #define DEVICEFUNCTIONS_H
 
 #include <Arduino.h>
+#include "Toilet_Drizzler_9000.h"
 // TODO add libraries
 
 

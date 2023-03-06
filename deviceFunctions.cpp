@@ -19,6 +19,17 @@ int spraysShortAddr, spraysLongAddr;             // EEPROM addresses
 int spraysShortDelay, spraysLongDelay;           // EEPROM addresses
 int spraysShortDelayAddr, spraysLongDelayAddr;   // EEPROM addresses
 
+//aanpak wordt om zodra de deur open gaat (en het licht aan)
+//een timer wordt gestart die 90 seconden aftelt.
+//binnen 90 seconden worden verschillende kenmerken bewaard in bools:
+//doorStaysOpen?
+//LightStaysOn?
+//MotionNearToilet? -> PersonNearbyToilet?/PersonFarAwayOfToilet?
+
+//differentiate between going to the toilet with open door
+//and cleaning the toilet by checking motion and distance
+
+
 
 /////////////////////////
 //      FUNCTIONS      //
@@ -46,6 +57,32 @@ void changeDeviceState(int newState) {
   }
 }
 
+//check light sensor
+int lightLevelCheck() {
+  int lightReading = analogRead(ldrPin);
+  return lightReading;
+}
+
+//check magnetic sensor
+//if door is closed, magnet will output LOW
+bool doorIsOPEN(){
+  int doorState = digitalRead(magneticSensorPin);
+  if(doorState == HIGH) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+//check distance, to be implemented
+int distanceCheck(){
+  return 0;
+}
+
+
+void makeDetection(){
+  return;
+}
 
 //////////////////////////
 //  EXTERNAL FUNCTIONS  //
@@ -134,3 +171,41 @@ String deviceStateString() {
 void deviceLoop(unsigned long curTime) {
 
 }
+
+
+//when bathroom is not in use, the system will stay idle untill the door is opened
+void deviceIdleLoop(unsigned long curTime){
+  if(doorIsOpen()){
+    changeDeviceState(1);
+  }
+  //TODO: IMPLEMENT HEARTBEAT, IMPLEMENT LDR
+}
+
+
+
+int detectionInterval = 180000;  //3 minutes currently
+bool doorClosed = true;
+
+
+void deviceDetectionLoop(unsigned long curTime){
+
+  //check if detectionInterval passed, if yes make choice
+  if(compareTimestamps(curTime, deviceTimestamp, detectionInterval)){
+    makeDetection();
+  };
+
+  //check if door is back closed again
+  doorClosed = doorCheck();
+
+
+}
+
+
+
+
+
+
+
+
+
+

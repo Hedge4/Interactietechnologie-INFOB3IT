@@ -41,3 +41,5 @@ void Knop::update(int volt, unsigned long curTime) {
   // save the reading. Next update call, it'll be the lastButtonState:
   lastButtonState = reading;
 }
+
+
