@@ -15,8 +15,8 @@
 
 
 extern LiquidCrystal lcd;
-extern const int lcdBacklightPin, ldrPin, motionSensorPin, magneticSensorPin;
-extern DallasTemperature sensors;
+extern const int lcdBacklightPin, ldrPin, ledsPin, sprayPin, motionSensorPin;
+extern DallasTemperature temperatureSensor;
 
 
 #endif /*TOILET_DRIZZLER_9000_H*/

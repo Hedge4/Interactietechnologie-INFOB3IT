@@ -8,12 +8,14 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 
 // other pins
-const int buttonsPin = A5;      //magnetic sensor also connected along this
+const int buttonsPin = A5;      // magnetic sensor also connected along this
 const int lcdBacklightPin = A4;
 const int ldrPin = A0;
-const int motionSensorPin = 13; //also connected to built-in led, needs testing
-const int distPin = 8;          //only one pin needed thanks to newPing library
-const int temperaturePin = 7;          
+const int sprayPin = 6;
+const int temperaturePin = 7;
+const int distPin = 8;          // only one pin needed thanks to newPing library
+const int ledsPin = 9;
+const int motionSensorPin = 10; // also connected to built-in led, needs testing
 
 //initialise sonar for distance sensor
 //get distance with sonar.ping_cm, if not in max distance returns 0, is blocking!
@@ -21,7 +23,7 @@ NewPing sonar(distPin, distPin, 200);
 
 //initialse temperature pin workings
 OneWire oneWire(temperaturePin);
-DallasTemperature sensors(&oneWire);
+DallasTemperature temperatureSensor(&oneWire);
 
 
 // set up our buttons, value of 1023 means no button is pressed
@@ -30,9 +32,7 @@ Knop okButton(501, 521);   // value of 1023 * 1/2 = ~511
 Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
 
 //connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
-Knop magneticSensor(758,778);  //value of 1023 * 3/4 = ~768
-
-//set up our button-like sensors
+Knop magneticSensor(758, 778); //value of 1023 * 3/4 = ~768
 
 
 void setup() {
@@ -43,6 +43,9 @@ void setup() {
   pinMode(buttonsPin, INPUT);
   pinMode(motionSensorPin, INPUT);
   pinMode(ldrPin, INPUT);
+  pinMode(ledsPin, OUTPUT);
+  pinMode(sprayPin, OUTPUT);
+  digitalWrite(ledsPin, HIGH);
   //no configuring needed for distance sensor (no downsides encountered whilst testing)
 
   // configure our output pins
@@ -104,11 +107,11 @@ void loop() {
 void alwaysUpdate(unsigned long curTime) {
   int buttonStatus = analogRead(buttonsPin);
 
-  //ODO add in update functions deviceStateChange to 'menu in use'
+  // TODO add in update functions deviceStateChange to 'menu in use'
   menuButton.update(buttonStatus, curTime);
   okButton.update(buttonStatus, curTime);
   sprayButton.update(buttonStatus, curTime);
-
+  magneticSensor.update(buttonStatus, curTime);
 }
 
 
@@ -128,15 +131,12 @@ void alwaysRun(unsigned long curTime) {
   if (sprayButton.changed) {
     sprayButtonUpdate(sprayButton.pressed);
   }
+  if (magneticSensor.changed) {
+    if (magneticSensor.pressed) {
+      Serial.println("Magnet on");
+    } else {
+      Serial.println("Magnet off");
+    }
+    // TODO reference magnet update method
+  }
 }
-
-
-
-
-
-
-
-
-
-
-

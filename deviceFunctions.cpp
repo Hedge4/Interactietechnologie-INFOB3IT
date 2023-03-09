@@ -147,8 +147,8 @@ bool deviceIsIdle() {
 
 // loops from 0-9 for now
 int temperature() {
-    sensors.requestTemperatures(); // Send the command to get temperatures
-    float tempC = sensors.getTempCByIndex(0);
+    temperatureSensor.requestTemperatures(); // Send the command to get temperatures
+    float tempC = temperatureSensor.getTempCByIndex(0);
     // Check if reading was successful
     if(tempC != DEVICE_DISCONNECTED_C) 
     {
@@ -212,12 +212,3 @@ void deviceDetectionLoop(unsigned long curTime){
 
 }
 */
-
-
-
-
-
-
-
-
-

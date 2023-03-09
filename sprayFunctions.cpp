@@ -29,7 +29,7 @@ void sprayLoop(unsigned long curTime) {
     if (compareTimestamps(curTime, sprayTimestamp, sprayDuration)) {
       spraying = false;
       waiting = true;
-      // SPRAY DISABLE LOGIC HERE
+      digitalWrite(sprayPin, LOW);
       sprayTimestamp = millis();
       Serial.println("Spraying stopped, now waiting.");
     }
@@ -63,7 +63,7 @@ void startSpray() {
     spraying = true;
     spraysLeft--;
     // TODO EEPROM UPDATE LOGIC HERE
-    // TODO SPRAY ENABLE LOGIC HERE
+    digitalWrite(sprayPin, HIGH);
     sprayTimestamp = millis();
     Serial.println("Spray started! Sprays left: " + String(plannedSpraysLeft));
   }
@@ -81,7 +81,7 @@ void cancelSprays() {
   if (spraying) {
     spraying = false;
     waiting = true;
-    // TODO SPRAY DISABLE LOGIC HERE
+    digitalWrite(sprayPin, LOW);
     sprayTimestamp = millis();
     Serial.println("Spraying stopped, now waiting.");
   }
