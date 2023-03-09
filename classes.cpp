@@ -42,14 +42,19 @@ void Knop::update(int volt, unsigned long curTime) {
   lastButtonState = reading;
 }
 
+DistanceSensor::DistanceSensor(int interval) {
+  senseInterval = interval;
+  active = false;
+  closeByThreshold = 100;
+  farAwayThreshold = 400;
+}
 
+void DistanceSensor::update(unsigned long curTime) {
 
+  //check if sensor can do its sensing
+  if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
+    return;
+  }
 
-
-
-
-
-
-
-
-
+  //do sonar_ping
+}
