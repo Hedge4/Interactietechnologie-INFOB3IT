@@ -1,4 +1,5 @@
 #include "classes.h"
+#include "Toilet_Drizzler_9000.h" //does not work if this is set in "classes.h"
 
 // BUTTON CLASS
 // constructor for button class
@@ -112,8 +113,8 @@ void TemperatureSensor::update(unsigned long curTime){
   }
   lastSensed = curTime;
   
-  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
-  float tempC = temperatureSensor.getTempCByIndex(0);
+  dallasTemperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  float tempC = dallasTemperatureSensor.getTempCByIndex(0);
   // Check if reading was successful
   if (tempC != DEVICE_DISCONNECTED_C)
   {
@@ -121,7 +122,7 @@ void TemperatureSensor::update(unsigned long curTime){
   }
   else {
     lastReading = 0;
-  }  
+  } 
 }
 
 

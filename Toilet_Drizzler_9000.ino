@@ -23,7 +23,7 @@ NewPing sonar(distPin, distPin, 200);
 
 //initialse temperature pin workings
 OneWire oneWire(temperaturePin);
-DallasTemperature temperatureSensor(&oneWire);
+DallasTemperature dallasTemperatureSensor(&oneWire);
 
 
 // set up our buttons, value of 1023 means no button is pressed
@@ -33,6 +33,13 @@ Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
 
 //connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
 Knop magneticSensor(758, 778); //value of 1023 * 3/4 = ~768
+
+//initialise the other sensors, intervals chosen arbitrarely
+DistanceSensor distSensor(1000);
+LightSensor lightSensor(500);
+MotionSensor motionSensor(10);
+TemperatureSensor temperatureSensor(1000);
+
 
 
 void setup() {
@@ -142,3 +149,4 @@ void alwaysRun(unsigned long curTime) {
     // TODO reference magnet update method
   }
 }
+

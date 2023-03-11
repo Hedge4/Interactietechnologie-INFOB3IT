@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "Toilet_Drizzler_9000.h"
+#include "classes.h"
 
 
 // methods

@@ -2,7 +2,6 @@
 #define CLASSES_H
 
 #include <Arduino.h>
-#include "Toilet_Drizzler_9000.h"
 #include "functions.h"
 
 
@@ -28,7 +27,7 @@ public:
 //general sensor class
 class Sensor {
 public:
-  bool active = false;        //determines whether sensor will be read
+  bool active = true;        //determines whether sensor will be read
   int senseInterval;  //determines interval of readings
   int lastReading = 0;    //saves last measurement sensor has taken 
   int lastSensed = 0;     //saves when last  measurement was taken

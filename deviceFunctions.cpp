@@ -144,36 +144,7 @@ void updateLedsOutput(unsigned long curTime) {
   }
 }
 
-//WORK IN PROGRESS
 
-/*
-  //check light sensor
-  int lightLevelCheck() {
-  int lightReading = analogRead(ldrPin);
-  return lightReading;
-  }
-
-  //check magnetic sensor
-  //if door is closed, magnet will output LOW
-  bool doorIsOpen(){
-  int doorState = digitalRead(magneticSensorPin);
-  if(doorState == HIGH) {
-    return true;
-  } else {
-    return false;
-  }
-  }
-
-  //check distance, to be implemented
-  int distanceCheck(){
-  return 0;
-  }
-
-
-  void makeDetection(){
-  return;
-  }
-*/
 
 //////////////////////////
 //  EXTERNAL FUNCTIONS  //
@@ -207,8 +178,8 @@ bool deviceIsIdle() {
 // loops from 0-9 for now
 //can be deprecated for dedicated sensor class
 int temperature() {
-  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
-  float tempC = temperatureSensor.getTempCByIndex(0);
+  dallasTemperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  float tempC = dallasTemperatureSensor.getTempCByIndex(0);
   // Check if reading was successful
   if (tempC != DEVICE_DISCONNECTED_C)
   {
@@ -243,6 +214,12 @@ String deviceStateString() {
 
 void deviceLoop(unsigned long curTime) {
   // update sensors
+  motionSensor.update(curTime);
+  distSensor.update(curTime);
+  temperatureSensor.update(curTime);
+  lightSensor.update(curTime);
+  //magneticSensor wordt al geupdate in alwaysUpdate loop
+
 
   // run detection / other states' logic
 
