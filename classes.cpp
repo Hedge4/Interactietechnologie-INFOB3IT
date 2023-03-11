@@ -99,7 +99,22 @@ void MotionSensor::update(unsigned long curTime){
   }
   lastSensed = curTime;
   //read the sensor
-  lastReading = digitalRead(motionSensorPin);  
+  int reading = digitalRead(motionSensorPin);  
+  if (reading != lastReading){
+    changed = true;
+    if(reading == HIGH)  {
+      motionsSensed++;
+    } 
+  }
+  else{
+    changed = false;
+  }
+  lastReading = reading;  
+    
+}
+
+void MotionSensor::resetSensor(){
+  motionsSensed = 0;  
 }
 
 TemperatureSensor::TemperatureSensor(int interval){

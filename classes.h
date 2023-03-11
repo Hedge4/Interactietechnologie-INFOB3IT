@@ -55,8 +55,11 @@ public:
 
 class MotionSensor : public Sensor {
 public:
+  unsigned long motionsSensed; //keep track of how much motion is being sensed. If high, likely cleaning 
+  bool changed = false;
   MotionSensor(int interval);
   void update(unsigned long curTime);  
+  void resetSensor();
 };
 
 class TemperatureSensor : public Sensor {

@@ -14,6 +14,9 @@
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
 
+unsigned long deviceStartsDetectingTimestamp = 0;
+int deviceEvaluationInterval = 3;
+
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
 
@@ -52,6 +55,7 @@ void changeDeviceState(int newState) {
       case 0:
         break;
       case 1:
+        deviceStartsDetectingTimestamp = millis();
         break;
       case 2:
         break;
