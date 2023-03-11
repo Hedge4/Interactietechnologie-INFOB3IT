@@ -17,6 +17,7 @@
 extern LiquidCrystal lcd;
 extern const int lcdBacklightPin, ldrPin, ledsPin, sprayPin, motionSensorPin;
 extern DallasTemperature temperatureSensor;
+extern NewPing sonar;
 
 extern const int defaultSprays;
 

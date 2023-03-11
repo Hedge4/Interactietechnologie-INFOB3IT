@@ -54,17 +54,77 @@ void Knop::update(int volt, unsigned long curTime) {
 
 DistanceSensor::DistanceSensor(int interval) {
   senseInterval = interval;
-  active = false;
   closeByThreshold = 100;
   farAwayThreshold = 400;
 }
 
 void DistanceSensor::update(unsigned long curTime) {
-
   //check if sensor can do its sensing
   if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
     return;
   }
-
-  //do sonar_ping
+  lastSensed = curTime;
+    
+  int reading = sonar.ping_cm();
+  //only update lastreading if differnece is greater than the readsensitivity
+  lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
 }
+
+LightSensor::LightSensor(int interval){
+  senseInterval = interval;
+}
+
+void LightSensor::update(unsigned long curTime) {
+  //check if sensor can do its sensing
+  if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
+    return;
+  }
+  lastSensed = curTime;
+    
+  int reading = analogRead(ldrPin);
+  //only update lastreading if differnece is greater than the readsensitivity
+  lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
+}
+
+
+MotionSensor::MotionSensor(int interval){
+  senseInterval = interval;
+}
+
+void MotionSensor::update(unsigned long curTime){
+  //check if sensor can do its sensing
+  if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
+    return;
+  }
+  lastSensed = curTime;
+  //read the sensor
+  lastReading = digitalRead(motionSensorPin);  
+}
+
+TemperatureSensor::TemperatureSensor(int interval){
+  senseInterval = interval;
+}
+
+void TemperatureSensor::update(unsigned long curTime){
+  //check if sensor can do its sensing
+  if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
+    return;
+  }
+  lastSensed = curTime;
+  
+  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  float tempC = temperatureSensor.getTempCByIndex(0);
+  // Check if reading was successful
+  if (tempC != DEVICE_DISCONNECTED_C)
+  {
+    lastReading = (int)tempC;
+  }
+  else {
+    lastReading = 0;
+  }  
+}
+
+
+
+
+

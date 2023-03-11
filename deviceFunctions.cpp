@@ -205,6 +205,7 @@ bool deviceIsIdle() {
 }
 
 // loops from 0-9 for now
+//can be deprecated for dedicated sensor class
 int temperature() {
   temperatureSensor.requestTemperatures(); // Send the command to get temperatures
   float tempC = temperatureSensor.getTempCByIndex(0);

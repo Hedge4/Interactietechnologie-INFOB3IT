@@ -2,6 +2,7 @@
 #define CLASSES_H
 
 #include <Arduino.h>
+#include "Toilet_Drizzler_9000.h"
 #include "functions.h"
 
 
@@ -27,28 +28,43 @@ public:
 //general sensor class
 class Sensor {
 public:
-  bool active;        //determines wether sensor will be read
+  bool active = false;        //determines whether sensor will be read
   int senseInterval;  //determines interval of readings
-  int lastSensed = 0;
+  int lastReading = 0;    //saves last measurement sensor has taken 
+  int lastSensed = 0;     //saves when last  measurement was taken
 };
 
 //distancesensor
 class DistanceSensor : public Sensor {
-public:
+public:     
+  int readSensitivity = 10;   //only update lastReading when reading differs by at least readSensitivity
+  //THESE logic should go to devicefunctions:
+  int closeByThreshold;       //distinguishes between person closeby for toilet use
+  int farAwayThreshold;       //and far away for when person leaves the toilet
   DistanceSensor(int interval);
-  int closeByThreshold;  //distinguishes between person closeby for toilet use
-  int farAwayThreshold;  //and far away for when person leaves the toilet
-  int lastReading;       //saves last measurement sensor has taken
+  void update(unsigned long curTime);
+};
+
+//lightsensor
+class LightSensor : public Sensor {
+public:
+  int readSensitivity = 30;   //only update lastReading when reading differs by at least readSensitivity
+  LightSensor(int interval);
   void update(unsigned long curTime);
 };
 
 
+class MotionSensor : public Sensor {
+public:
+  MotionSensor(int interval);
+  void update(unsigned long curTime);  
+};
 
-
-
-
-
-
+class TemperatureSensor : public Sensor {
+public:
+  TemperatureSensor(int interval);
+  void update(unsigned long curTime);
+};
 
 
 #endif /*CLASSES_H*/
