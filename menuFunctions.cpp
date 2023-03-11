@@ -21,8 +21,10 @@ const int positionsPerScroll = 3;       // how many positions the text scrolls w
 const int spaceBetweenScrolls = 3;      // how many spaces to add before text repeats
 const int scrollShortDelay = 450;       // how long before scroll position updates
 const int scrollLongDelay = 3000;       // time to pause at initial position before scrolling again
-unsigned long displayRefreshTimestamp;  // when info on screen in display state was last updated
-const int displayRefreshDelay = 1000;   // refresh delay for info in display state
+unsigned long displayRefreshFastTime;   // when quickly changing display state info was last updated
+unsigned long displayRefreshSlowTime;   // when slowly changing display state info was last updated
+const int displayRefreshFast = 500;     // refresh delay for quickly changing info
+const int displayRefreshSlow = 10000;   // refresh delay for slowly changing info
 
 /* Possible settings:
    0 --> 'short': How many sprays for a short toilet visit
@@ -169,7 +171,6 @@ void setText(bool resetScrollPos = true) {
   }
 
   lcd.clear();
-  if (scrollIndex != 0) scrollTimestamp = millis();
   updateTextScroll();
   updateBottomText();
 }
@@ -413,24 +414,27 @@ void menuLoop(unsigned long curTime) {
     if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
       if (deviceIsIdle()) {
         changeMenuState(0);
+        return;
       }
     }
 
-    // if info on the display changed, update text
-    if (compareTimestamps(curTime, displayRefreshTimestamp, displayRefreshDelay)) {
-      displayRefreshTimestamp = curTime;
+    // if device/state info on the display changed
+    if (compareTimestamps(curTime, displayRefreshFastTime, displayRefreshFast)) {
+      displayRefreshFastTime = curTime;
       String newBottomText = displayStateBottomText();
-      String newTopText = displayStateTopText();
-
-      if (newTopText != topText) {
-        // setText() will update both top and bottom text, so set both
-        topText = newTopText;
-        bottomText = newBottomText;
-        setText(false); // false means we don't update the scroll position
-      } else if (newTopText != topText) {
-        // don't interfere with topText if we don't have to, because of scrolling
+      if (newBottomText != bottomText) {
         bottomText = newBottomText;
         updateBottomText();
+      }
+    }
+
+    // if sensor info on the display changed
+    if (compareTimestamps(curTime, displayRefreshSlowTime, displayRefreshSlow)) {
+      displayRefreshSlowTime = curTime;
+      String newTopText = displayStateTopText();
+      if (newTopText != topText) {
+        topText = newTopText;
+        setText(false); // false means we don't update the scroll position
       }
     }
   }
@@ -439,6 +443,7 @@ void menuLoop(unsigned long curTime) {
   if (menuState == 2 || menuState == 3) {
     if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
       changeMenuState(1);
+      return;
     }
   }
 }
