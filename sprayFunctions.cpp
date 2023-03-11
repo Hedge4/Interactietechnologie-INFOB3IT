@@ -28,21 +28,26 @@ void sprayLoop(unsigned long curTime) {
       digitalWrite(sprayPin, LOW);
       sprayTimestamp = millis();
       Serial.println("Spraying stopped, now waiting.");
+
+      // if there's another spray coming, we indicate that with a yellow led
+      if (plannedSpraysLeft > 0) yellowLed = 1;
+      // if there's less than 5% of sprays left in the device, we show a constantly burning yellow led
+      else if (spraysLeft / defaultTotalSprays < 0.05) yellowLed = 1;
+      // and if neither, turn the lef off
+      else yellowLed = 0;
     }
   } else if (waiting) {
     // stop waiting if we've reached pauseDuration
     if (compareTimestamps(curTime, sprayTimestamp, pauseDuration)) {
       waiting = false;
       if (plannedSpraysLeft > 0) {
-        plannedSpraysLeft--;
+        if (spraysLeft > 0) plannedSpraysLeft--;
         startSpray();
       } else {
         Serial.println("No more sprays, now idle.");
       }
     }
   }
-
-  // if it was pressed, check if button no longer pressed
 }
 
 
@@ -57,7 +62,8 @@ void startSpray() {
     Serial.println("Remaining sprays set to: " + String(plannedSpraysLeft));
   } else {
     spraying = true;
-    spraysLeft--;
+    yellowLed = 3; // the yellow led indicates the device is active with a fast blinking led
+    if (spraysLeft > 0) spraysLeft--;
     // TODO EEPROM UPDATE LOGIC HERE
     digitalWrite(sprayPin, HIGH);
     sprayTimestamp = millis();

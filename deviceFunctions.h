@@ -3,9 +3,9 @@
 
 #include <Arduino.h>
 #include "Toilet_Drizzler_9000.h"
-// TODO add libraries
 
 
+// methods
 void deviceLoop(unsigned long curTime);
 void setSpraysShort(int newValue);
 void setSpraysLong(int newValue);
@@ -16,6 +16,8 @@ void setSpraysLongDelay(unsigned long newValue);
 bool deviceIsIdle();
 int temperature();
 String deviceStateString();
+extern int yellowLed; // '0' for off, '1' for on, '2' for slow blink, '3' for fast blink
+extern int greenLed;
 
 
 #endif /*DEVICEFUNCTIONS_H*/

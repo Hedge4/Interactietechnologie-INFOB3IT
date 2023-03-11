@@ -37,7 +37,7 @@ const long configDelay = 3000l * 1000;                      // 30 seconds, then 
 int currentSetting, currentValue;                           // index of selected setting and index of selected value
 const int sprayConfigOptions[6] = { 0, 1, 2, 3, 4, 5 };     // value options for spray amount settings
 const int delayConfigOptions[6] = { 0, 5, 10, 20, 40, 60 }; // value options for delay before spray settings
-const String configDesc[5] = { "Sprays na kort bezoek", "Sprays na lang bezoek", "Delay na kort bezoek", "Delay na lang bezoek", "Reset spray-aantal" };
+const String configDesc[5] = { "Sprays after short visit", "Sprays after long visit", "Delay after short visit", "Delay after long visit", "Reset sprays remaining" };
 const int defaultTotalSprays = 2400;
 
 int spraysShortSetting, spraysLongSetting;            // how many sprays after long/short visit
@@ -323,6 +323,7 @@ void confirmConfig() {
     case 4:
       spraysLeft = defaultTotalSprays;
       // TODO EEPROM update logic
+      if (yellowLed == 1) yellowLed = 0; // stop indiciating device is almost empty
       break;
   }
 

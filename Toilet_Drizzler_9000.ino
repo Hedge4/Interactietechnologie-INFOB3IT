@@ -87,6 +87,11 @@ void setup() {
 
   // activate the LCD display (display state)
   activateScreen();
+
+  // show there's less than 5% of sprays remaining with a constantly burning yellow led
+  if (spraysLeft / defaultTotalSprays < 0.05) {
+    yellowLed = 1;
+  }
 }
 
 
