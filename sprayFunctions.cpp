@@ -14,10 +14,6 @@ int plannedSpraysLeft = 0;
 unsigned long sprayTimestamp = 0;
 //bool buttonPressed = false;
 
-// total sprays left in device, and EEPROM address
-int spraysLeft;
-int spraysLeftAddr;
-
 
 ////////////////////////////
 //          LOOP          //
@@ -90,16 +86,10 @@ void cancelSprays() {
 void sprayButtonUpdate(bool pressed) {
   // handle spray button change
   // we don't have to check current state, startSpray() does this
-  if (pressed) {
-    // only do something if button became pressed
+  if (!pressed) {
+    // only do something if button was released
     startSpray();
   }
-}
-
-// receive EEPROM address and setup value for how many sprays the device has left
-void spraysLeftSetup(int eeAddress, int value) {
-  spraysLeft = value;
-  spraysLeftAddr = eeAddress;
 }
 
 

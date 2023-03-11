@@ -14,10 +14,12 @@ class Knop {
 
   unsigned long lastDebounceTime = 0;  // the last time the output pin was toggled
   unsigned long debounceDelay = 50;    // the debounce time; increase if the output flickers
+  int longPressDelay = 2000;           // how many milliseconds (not) pressed counts as a long input
 
 public:
   Knop(int l, int h);
   bool pressed = false;
+  bool longPress = false;
   bool changed = false;
   void update(int volt, unsigned long curTime);
 };

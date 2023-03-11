@@ -43,15 +43,12 @@ void setup() {
   pinMode(buttonsPin, INPUT);
   pinMode(motionSensorPin, INPUT);
   pinMode(ldrPin, INPUT);
-  pinMode(ledsPin, OUTPUT);
+  pinMode(ledsPin, INPUT);  // setting leds pin as an input on startup turns both leds off
   pinMode(sprayPin, OUTPUT);
-  digitalWrite(ledsPin, HIGH);
   //no configuring needed for distance sensor (no downsides encountered whilst testing)
 
   // configure our output pins
   pinMode(lcdBacklightPin, OUTPUT);
-
-
 
   // for logging purposes
   Serial.begin(9600);
@@ -64,18 +61,18 @@ void setup() {
   const int spraysLongDelayAddress = 0;
 
   // TODO EEPROM read logic here
-  int spraysLeft = 2400;
+  int spraysLeft = defaultTotalSprays;
   int spraysShort = 1;
   int spraysLong = 2;
-  int spraysShortDelay = 5000;
-  int spraysLongDelay = 5000;
+  int spraysShortDelay = 2;   // 2 corresponds to a 10s delay
+  int spraysLongDelay = 2;
 
   // TODO check if data is valid (not 255), or set to default
-  spraysLeft = ( false ) ? 2400 : spraysLeft;
+  spraysLeft = ( false ) ? defaultTotalSprays : spraysLeft;
   spraysShort = ( false ) ? 1 : spraysShort;
   spraysLong = ( false ) ? 2 : spraysLong;
-  spraysShortDelay = ( false ) ? 5000 : spraysShortDelay;
-  spraysLongDelay = ( false ) ? 5000 : spraysLongDelay;
+  spraysShortDelay = ( false ) ? 2 : spraysShortDelay;  // 2 corresponds to a 10s delay
+  spraysLongDelay = ( false ) ? 2 : spraysLongDelay;
 
   // save eeAddress and value for how many sprays the device has left
   spraysLeftSetup(spraysLeftAddress, spraysLeft);
@@ -123,7 +120,7 @@ void alwaysRun(unsigned long curTime) {
 
   // check buttons - only send an update if buttonstate was changed
   if (menuButton.changed) {
-    menuButtonUpdate(menuButton.pressed);
+    menuButtonUpdate(menuButton.pressed, menuButton.longPress);
   }
   if (okButton.changed) {
     okButtonUpdate(okButton.pressed);

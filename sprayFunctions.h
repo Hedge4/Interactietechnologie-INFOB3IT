@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "functions.h"
+#include "menuFunctions.h"
 #include "Toilet_Drizzler_9000.h" // to enable/disable the Toilet Drizzler 9000
 
 
@@ -14,7 +15,6 @@ void sprayButtonUpdate(bool pressed);
 void spraysLeftSetup(int eeAddress, int value);
 
 // getters
-extern int spraysLeft;
 bool sprayComing();
 
 

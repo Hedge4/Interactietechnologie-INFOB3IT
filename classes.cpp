@@ -16,6 +16,11 @@ void Knop::update(int volt, unsigned long curTime) {
     reading = HIGH;
   }
 
+  // if debounced state changed last iteration, longPress is no longer true
+  if (changed && longPress) {
+    longPress = false;
+  }
+
   // reset debounceTime if buttonstate changed
   if (reading != lastButtonState) {
     lastDebounceTime = curTime;
@@ -35,6 +40,11 @@ void Knop::update(int volt, unsigned long curTime) {
       }
     } else {
       changed = false;
+      if ((curTime - lastDebounceTime) > longPressDelay) {
+        // should be used together with pressed, to detect long pressed or long not pressed
+        // on release of button, stays true for one more iteration so release after long press can be detected
+        longPress = true;
+      }
     }
   }
 

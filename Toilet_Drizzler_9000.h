@@ -13,10 +13,12 @@
 #include "menuFunctions.h"
 #include "sprayFunctions.h"
 
-
+// connected hardware
 extern LiquidCrystal lcd;
 extern const int lcdBacklightPin, ldrPin, ledsPin, sprayPin, motionSensorPin;
 extern DallasTemperature temperatureSensor;
+
+extern const int defaultSprays;
 
 
 #endif /*TOILET_DRIZZLER_9000_H*/

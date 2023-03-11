@@ -9,9 +9,17 @@
 
 void menuLoop(unsigned long curTime);
 void activateScreen();
-void menuButtonUpdate(bool pressed);
+void menuButtonUpdate(bool pressed, bool longPress);
 void okButtonUpdate(bool pressed);
 
+void spraysShortSetup(int eeAddress, int value);
+void spraysLongSetup(int eeAddress, int value);
+void spraysShortDelaySetup(int eeAddress, int value);
+void spraysLongDelaySetup(int eeAddress, int value);
+void spraysLeftSetup(int eeAddress, int value);
+
+extern int spraysLeft;
+extern const int defaultTotalSprays;
 bool menuActive();
 
 

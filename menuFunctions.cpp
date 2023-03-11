@@ -9,9 +9,10 @@
   1 --> 'display': Display default info
   2 --> 'menu': User is interacting with the menu
   3 --> 'config': User is changing one of the settings
+  4 --> 'devmode': Shows debugging info
 */
 int menuState = 0;
-unsigned long menuTimestamp = 0;                  // when menuState last changed
+unsigned long menuTimestamp = 0;        // when menuState last changed
 
 String topText, bottomText;             // top and bottom row of lcd screen
 int scrollIndex;                        // stores how far text has scrolled to the left
@@ -27,16 +28,60 @@ const int displayRefreshDelay = 1000;   // refresh delay for info in display sta
    0 --> 'short': How many sprays for a short toilet visit
    1 --> 'long': How many sprays for a long toilet visit
 */
-int currentSetting, currentValue;
-const int maxConfig = 5, minConfig = 0;     // bounds for all settings
-const int configDelay = 30 * 1000;          // 30 seconds, then leaves menu or config state
-int sprayConfigList[2] = { 1, 2 };          // default settings
-const String sprayConfigDesc[2] = { "Sprays na kort bezoek", "Sprays na lang bezoek" };
+
+// TODO change this back to 30 seconds and back to int
+const long configDelay = 3000l * 1000;                      // 30 seconds, then leaves menu or config state
+
+int currentSetting, currentValue;                           // index of selected setting and index of selected value
+const int sprayConfigOptions[6] = { 0, 1, 2, 3, 4, 5 };     // value options for spray amount settings
+const int delayConfigOptions[6] = { 0, 5, 10, 20, 40, 60 }; // value options for delay before spray settings
+const String configDesc[5] = { "Sprays na kort bezoek", "Sprays na lang bezoek", "Delay na kort bezoek", "Delay na lang bezoek", "Reset spray-aantal" };
+const int defaultTotalSprays = 2400;
+
+int spraysShortSetting, spraysLongSetting;            // how many sprays after long/short visit
+int spraysShortAddr, spraysLongAddr;                  // EEPROM addresses
+int spraysShortDelaySetting, spraysLongDelaySetting;  // how many milliseconds delay between end of toilet use and spray
+int spraysShortDelayAddr, spraysLongDelayAddr;        // EEPROM addresses
+int spraysLeft, spraysLeftAddr;                       // total sprays left in device, and EEPROM address
 
 
 /////////////////////////
 //      FUNCTIONS      //
 /////////////////////////
+
+// receive EEPROM address and setup value for the amount of sprays after a short visit
+void spraysShortSetup(int eeAddress, int value) {
+  spraysShortSetting = value;
+  spraysShortAddr = eeAddress;
+  setSpraysShort(value);
+}
+
+// receive EEPROM address and setup value for the amount of sprays after a long visit
+void spraysLongSetup(int eeAddress, int value) {
+  spraysLongSetting = value;
+  spraysLongAddr = eeAddress;
+  setSpraysLong(value);
+}
+
+// receive EEPROM address and setup value for how long the device waits before spraying after a short visit
+void spraysShortDelaySetup(int eeAddress, int value) {
+  spraysShortDelaySetting = value;
+  spraysShortDelayAddr = eeAddress;
+  setSpraysShortDelay(value);
+}
+
+// receive EEPROM address and setup value for how long the device waits before spraying after a long visit
+void spraysLongDelaySetup(int eeAddress, int value) {
+  spraysLongDelaySetting = value;
+  spraysLongDelayAddr = eeAddress;
+  setSpraysLongDelay(value);
+}
+
+// receive EEPROM address and setup value for how many sprays the device has left
+void spraysLeftSetup(int eeAddress, int value) {
+  spraysLeft = value;
+  spraysLeftAddr = eeAddress;
+}
 
 String displayStateTopText() {
   return "Temperature: " + String(temperature()) + "   Sprays left: " + String(spraysLeft);
@@ -65,6 +110,12 @@ void updateBottomText() {
 
 // prints text at one position based on scrollIndex
 void updateTextScroll() {
+  // handle non-scrolling text
+  if (topText.length() <= 16 + spaceBetweenScrolls) {
+    lcd.clear();
+    return;
+  }
+
   lcd.setCursor(0, 0);
   int x = scrollIndex;
   for (int i = 0; i < 16; i++) {
@@ -103,6 +154,12 @@ void setText(bool resetScrollPos = true) {
     for (int i = 0; i < spaceBetweenScrolls; i++) {
       topText = topText + " ";
     }
+  } else {
+    // handle non scrolling text
+    lcd.clear();
+    lcd.print(topText);
+    updateBottomText();
+    return;
   }
 
   // if this isn't reset text will be printed at roughly the same position (if character count is similar enough)
@@ -113,9 +170,13 @@ void setText(bool resetScrollPos = true) {
 
   lcd.clear();
   if (scrollIndex != 0) scrollTimestamp = millis();
-  updateTextScroll(); // if text isn't large enough to scroll it will behave like .print()
+  updateTextScroll();
   updateBottomText();
 }
+
+// declare since we're referencing these before definition
+void openSettings();
+void openConfig();
 
 // setup for when we enter a specific state
 void changeMenuState(int newState) {
@@ -130,27 +191,142 @@ void changeMenuState(int newState) {
         topText = "";
         bottomText = "";
         lcd.clear();
-        break;
+        return;
       case 1:
         powerBacklight(true);
         topText = displayStateTopText();
         bottomText = displayStateBottomText();
         lcd.clear();
         setText();
-        break;
+        return;
       case 2:
-        currentSetting = 0;
-        currentValue = sprayConfigList[currentSetting];
-        topText = sprayConfigDesc[currentSetting];
-        bottomText = "Huidig: " + String(currentValue);
-        setText();
-        break;
+        openSettings();
+        return;
       case 3:
-        bottomText = "Nieuw: " + String(currentValue);
+        openConfig();
+        return;
+      case 4:
+        topText = "Placeholder";
+        bottomText = "More text, aye!";
         setText();
-        break;
+        return;
     }
   }
+}
+
+// when the settings menu opens
+void openSettings() {
+  currentSetting = 0;
+  currentValue = spraysShortSetting;
+  topText = configDesc[currentSetting];
+  bottomText = "Huidig: " + String(currentValue);
+  setText();
+}
+
+// when we toggle between viewing different settings with the menu button
+void chooseSetting() {
+  // change our current setting
+  if (++currentSetting > 4) currentSetting = 0;
+
+  switch (currentSetting) {
+    case 0:
+      currentValue = spraysShortSetting;
+      bottomText = "Huidig: " + String(sprayConfigOptions[currentValue]);
+      break;
+    case 1:
+      currentValue = spraysLongSetting;
+      bottomText = "Huidig: " + String(sprayConfigOptions[currentValue]);
+      break;
+    case 2:
+      currentValue = spraysShortDelaySetting;
+      bottomText = "Huidig: " + String(delayConfigOptions[currentValue]);
+      break;
+    case 3:
+      currentValue = spraysLongDelaySetting;
+      bottomText = "Huidig: " + String(delayConfigOptions[currentValue]);
+      break;
+    case 4:
+      bottomText = String(spraysLeft) + " resterend";
+      break;
+  }
+
+  topText = configDesc[currentSetting];
+  setText();
+}
+
+// when a setting was selected with the ok button
+void openConfig() {
+  switch (currentSetting) {
+    case 0:
+    case 1:
+      bottomText = "Nieuw: " + String(sprayConfigOptions[currentValue]);
+      break;
+    case 2:
+    case 3:
+      bottomText = "Nieuw: " + String(delayConfigOptions[currentValue]);
+      break;
+    case 4:
+      topText = "Are you sure?";
+      bottomText = String(spraysLeft) + " -> " + String(defaultTotalSprays);
+      break;
+  }
+
+  setText();
+}
+
+// when we toggle between possible new values for the selected settings with the menu button
+void chooseConfig() {
+  switch (currentSetting) {
+    case 0:
+    case 1:
+      if (++currentValue >= (sizeof(sprayConfigOptions) / sizeof(sprayConfigOptions[0]))) currentValue = 0; // compare to array size
+      bottomText = "Nieuw: " + String(sprayConfigOptions[currentValue]);
+      break;
+    case 2:
+    case 3:
+      if (++currentValue >= (sizeof(delayConfigOptions) / sizeof(delayConfigOptions[0]))) currentValue = 0; // compare to array size
+      bottomText = "Nieuw: " + String(delayConfigOptions[currentValue]);
+      break;
+    case 4:
+      // on reset confirm screen, go back to display state if menu button is pressed instead of ok
+      changeMenuState(1);
+      return;
+  }
+
+  setText();
+}
+
+// when a new setting is confirmed with the ok button
+void confirmConfig() {
+  switch (currentSetting) {
+    case 0:
+      spraysShortSetting = currentValue;
+      // TODO EEPROM update logic
+      setSpraysShort(sprayConfigOptions[currentValue]);
+      break;
+    case 1:
+      spraysLongSetting = currentValue;
+      // TODO EEPROM update logic
+      setSpraysLong(sprayConfigOptions[currentValue]);
+      break;
+    case 2:
+      spraysShortDelaySetting = currentValue;
+      // TODO EEPROM update logic
+      setSpraysShortDelay(1000l * delayConfigOptions[currentValue]);    // 1000 is a long to avoid overflow
+      break;
+    case 3:
+      spraysLongDelaySetting = currentValue;
+      // TODO EEPROM update logic
+      setSpraysLongDelay(1000l * delayConfigOptions[currentValue]);     // 1000 is a long to avoid overflow
+      break;
+    case 4:
+      spraysLeft = defaultTotalSprays;
+      // TODO EEPROM update logic
+      break;
+  }
+
+  // change state back to display mode after applying the change
+  changeMenuState(1);
 }
 
 
@@ -159,69 +335,52 @@ void changeMenuState(int newState) {
 ////////////////////////
 
 // what happens if the menu button is pressed, based on state
-void menuButtonUpdate(bool pressed) {
-  if (pressed) {
+void menuButtonUpdate(bool pressed, bool longPressed) {
+  if (!pressed) { // triggers on release
+    if (longPressed) {
+      changeMenuState(4);
+      return;
+    }
+
     switch (menuState) {
       case 0:
         changeMenuState(1);
-        break;
+        return;
       case 1:
         changeMenuState(2);
-        break;
+        return;
       case 2:
-        // change our current setting
-        switch (currentSetting) {
-          case 0:
-            currentSetting = 1;
-            break;
-          case 1:
-            currentSetting = 0;
-            break;
-        }
-        // update values for new setting
-        currentValue = sprayConfigList[currentSetting];
-        topText = sprayConfigDesc[currentSetting];
-        bottomText = "Huidig: " + String(currentValue);
-        setText();
-        break;
+        chooseSetting();
+        return;
       case 3:
-        if (currentValue < maxConfig) {
-          currentValue++;
-        } else {
-          currentValue = minConfig;
-        }
-        bottomText = "Nieuw: " + String(currentValue);
-        updateBottomText();
-        break;
+        chooseConfig();
+        return;
+      case 4:
+        changeMenuState(1);
+        return;
     }
   }
 }
 
 // what happens if the ok button is pressed, based on state
 void okButtonUpdate(bool pressed) {
-  if (pressed) {
+  if (!pressed) {
     switch (menuState) {
       case 0:
         changeMenuState(1);
-        break;
+        return;
       case 1:
         changeMenuState(2);
-        break;
+        return;
       case 2:
         changeMenuState(3);
-        break;
+        return;
       case 3:
-        // update setting locally
-        sprayConfigList[currentSetting] = currentValue;
-        // update setting in device controller
-        if (currentSetting == 0) {
-          setSpraysShort(currentValue);
-        } else if (currentSetting == 1) {
-          setSpraysLong(currentValue);
-        }
-        // finally change state back to display mode
+        confirmConfig();
+        return;
+      case 4:
         changeMenuState(1);
-        break;
+        return;
     }
   }
 }

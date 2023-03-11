@@ -14,10 +14,8 @@
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
 
-int spraysShort, spraysLong;                     // how many sprays after long/short visit
-int spraysShortAddr, spraysLongAddr;             // EEPROM addresses
-int spraysShortDelay, spraysLongDelay;           // EEPROM addresses
-int spraysShortDelayAddr, spraysLongDelayAddr;   // EEPROM addresses
+int spraysShort, spraysLong;                      // how many sprays after long/short visit
+unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
 
 //aanpak wordt om zodra de deur open gaat (en het licht aan)
 //een timer wordt gestart die 90 seconden aftelt.
@@ -94,46 +92,18 @@ void makeDetection(){
 
 void setSpraysShort(int newValue) {
   spraysShort = newValue;
-  // TODO update EEPROM
 }
 
 void setSpraysLong(int newValue) {
   spraysLong = newValue;
-  // TODO update EEPROM
 }
 
-void setSpraysShortDelay(int newValue) {
+void setSpraysShortDelay(unsigned long newValue) {
   spraysShortDelay = newValue;
-  // TODO update EEPROM
 }
 
-void setSpraysLongDelay(int newValue) {
+void setSpraysLongDelay(unsigned long newValue) {
   spraysLongDelay = newValue;
-  // TODO update EEPROM
-}
-
-// receive EEPROM address and setup value for the amount of sprays after a short visit
-void spraysShortSetup(int eeAddress, int value) {
-  spraysShort = value;
-  spraysShortAddr = eeAddress;
-}
-
-// receive EEPROM address and setup value for the amount of sprays after a long visit
-void spraysLongSetup(int eeAddress, int value) {
-  spraysLong = value;
-  spraysLongAddr = eeAddress;
-}
-
-// receive EEPROM address and setup value for how long the device waits before spraying after a short visit
-void spraysShortDelaySetup(int eeAddress, int value) {
-  spraysShortDelay = value;
-  spraysShortDelayAddr = eeAddress;
-}
-
-// receive EEPROM address and setup value for how long the device waits before spraying after a long visit
-void spraysLongDelaySetup(int eeAddress, int value) {
-  spraysLongDelay = value;
-  spraysLongDelayAddr = eeAddress;
 }
 
 

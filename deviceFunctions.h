@@ -9,12 +9,8 @@
 void deviceLoop(unsigned long curTime);
 void setSpraysShort(int newValue);
 void setSpraysLong(int newValue);
-void setSpraysShortDelay(int newValue);
-void setSpraysLongDelay(int newValue);
-void spraysShortSetup(int eeAddress, int value);
-void spraysLongSetup(int eeAddress, int value);
-void spraysShortDelaySetup(int eeAddress, int value);
-void spraysLongDelaySetup(int eeAddress, int value);
+void setSpraysShortDelay(unsigned long newValue);
+void setSpraysLongDelay(unsigned long newValue);
 
 // getters
 bool deviceIsIdle();
