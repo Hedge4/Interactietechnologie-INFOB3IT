@@ -219,6 +219,14 @@ String deviceStateString() {
 //          LOOP          //
 ////////////////////////////
 
+unsigned long personOnToiletTimestamp = 0;  //linked to distance sensor, stars up when person is sitting on toilet
+unsigned long toiletTime = 0;               //save length of sitting-on-toilet visit
+int personOnToiletThreshold = 5000;         //threshold for random interferences
+int personOnToiletShortThreshold = 30000;   //threshold for short visit
+int personOnToiletLongThreshold = 120000;   //threhsold for long visit
+bool personWasOnToilet = false;
+int toiletUseCase = 0;  //0:deciding, 1:short, 2:long, 3:cleaning
+
 void deviceLoop(unsigned long curTime) {
   // update sensors
   motionSensor.update(curTime);
@@ -227,7 +235,7 @@ void deviceLoop(unsigned long curTime) {
   lightSensor.update(curTime);
   //magneticSensor wordt al geupdate in alwaysUpdate loop
 
-  //reset timeRemaining upon update of a sensor
+  //refresh active time
   if(   motionSensor.changed 
     ||  magneticSensor.changed
     ||  distSensor.changed
@@ -235,10 +243,48 @@ void deviceLoop(unsigned long curTime) {
     deviceRemainingActiveTime = deviceActiveTime;
   }
 
-  // run detection / other states' logic
+  switch(deviceState){
+    case 0:
+      break;
+    case 1:
+      bool doorIsClosed = magneticSensor.pressed;
+      bool lightIsOn = (lightSensor.lastReading > 100);  //LOWLIGHTLEVELTHRESHOLD HERE
+      
+      //tick the person goes sitting on toilet 
+      if(distSensor.changed && distSensor.triggered){
+        personOnToiletTimestamp = curTime;
+        personWasOnToilet = true;
+      }
+
+      //tick the person moves away from toilet
+      if(personWasOnToilet && distSensor.changed && !distSensor.triggered){
+        toiletTime = curTime - personOnToiletTimestamp;
+        personWasOnToilet = false;
+        //decide if this was a long or short visit
+        if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
+          toiletUseCase = 1;
+        }
+        else if(toiletTime > personOnToiletLongThreshold){
+          toiletUseCase = 2;
+        }
+      }
+
+
+      break;
+
+
+  }
+
+
+  deviceRemainingActiveTime -= curTime;
+  //go back to idle once device is no longer active
+  if (deviceRemainingActiveTime <= 0){
+    changeDeviceState(0);
+  }
 
   updateLedsOutput(curTime);
 }
+
 
 //WORK IN PROGRESS
 /*

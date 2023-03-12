@@ -32,6 +32,7 @@ public:
   int lastReading = 0;    //saves last measurement sensor has taken 
   int lastSensed = 0;     //saves when last  measurement was taken
   bool changed = false;   //saves if sensors measurement changed this tick
+  bool triggered = false; //sensor specific 'triggered'
 };
 
 //distancesensor

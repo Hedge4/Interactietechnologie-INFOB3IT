@@ -68,14 +68,22 @@ void DistanceSensor::update(unsigned long curTime) {
     
   int reading = sonar.ping_cm();
   //only update lastreading if differnece is greater than the readsensitivity
-  lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
   if (abs(reading - lastReading) > readSensitivity){
     lastReading = reading;
     changed = true;
+    
+    if(lastReading > closeByThreshold && lastReading < farAwayThreshold){
+    triggered = true;
+    }
   }
   else {
     changed = false;
   }
+
+  if(!(lastReading > closeByThreshold && lastReading < farAwayThreshold)){
+    triggered = false;
+  }
+
 }
 
 LightSensor::LightSensor(int interval){
@@ -91,7 +99,6 @@ void LightSensor::update(unsigned long curTime) {
     
   int reading = analogRead(ldrPin);
   //only update lastreading if differnece is greater than the readsensitivity
-  lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
   if (abs(reading - lastReading) > readSensitivity){
     lastReading = reading;
     changed = true;
