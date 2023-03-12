@@ -27,10 +27,11 @@ public:
 //general sensor class
 class Sensor {
 public:
-  bool active = true;        //determines whether sensor will be read
-  int senseInterval;  //determines interval of readings
+  bool active = true;     //determines whether sensor will be read
+  int senseInterval;      //determines interval of readings
   int lastReading = 0;    //saves last measurement sensor has taken 
   int lastSensed = 0;     //saves when last  measurement was taken
+  bool changed = false;   //saves if sensors measurement changed this tick
 };
 
 //distancesensor
@@ -56,7 +57,6 @@ public:
 class MotionSensor : public Sensor {
 public:
   unsigned long motionsSensed; //keep track of how much motion is being sensed. If high, likely cleaning 
-  bool changed = false;
   MotionSensor(int interval);
   void update(unsigned long curTime);  
   void resetSensor();

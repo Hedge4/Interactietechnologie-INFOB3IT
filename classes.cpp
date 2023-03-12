@@ -69,6 +69,13 @@ void DistanceSensor::update(unsigned long curTime) {
   int reading = sonar.ping_cm();
   //only update lastreading if differnece is greater than the readsensitivity
   lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
+  if (abs(reading - lastReading) > readSensitivity){
+    lastReading = reading;
+    changed = true;
+  }
+  else {
+    changed = false;
+  }
 }
 
 LightSensor::LightSensor(int interval){
@@ -85,11 +92,19 @@ void LightSensor::update(unsigned long curTime) {
   int reading = analogRead(ldrPin);
   //only update lastreading if differnece is greater than the readsensitivity
   lastReading = (abs(reading - lastReading) > readSensitivity) ? reading : lastReading;
+  if (abs(reading - lastReading) > readSensitivity){
+    lastReading = reading;
+    changed = true;
+  }
+  else {
+    changed = false;
+  }
 }
 
 
 MotionSensor::MotionSensor(int interval){
   senseInterval = interval;
+  motionsSensed = 0;  //during frame of detection, count how many times motion is detected
 }
 
 void MotionSensor::update(unsigned long curTime){

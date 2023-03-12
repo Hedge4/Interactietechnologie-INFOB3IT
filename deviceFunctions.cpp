@@ -14,8 +14,11 @@
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
 
-unsigned long deviceStartsDetectingTimestamp = 0;
-int deviceEvaluationInterval = 3;
+//timing related vars
+//unsigned long deviceStartsDetectingTimestamp = 0;
+//int deviceEvaluationInterval = 3;
+unsigned long deviceActiveTime = 60000;  //device will stay on for 60 seconds upon sensing something.
+unsigned long  deviceRemainingActiveTime = 60000;
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -55,7 +58,7 @@ void changeDeviceState(int newState) {
       case 0:
         break;
       case 1:
-        deviceStartsDetectingTimestamp = millis();
+//        deviceStartsDetectingTimestamp = millis();
         break;
       case 2:
         break;
@@ -224,6 +227,13 @@ void deviceLoop(unsigned long curTime) {
   lightSensor.update(curTime);
   //magneticSensor wordt al geupdate in alwaysUpdate loop
 
+  //reset timeRemaining upon update of a sensor
+  if(   motionSensor.changed 
+    ||  magneticSensor.changed
+    ||  distSensor.changed
+    ||  lightSensor.changed){
+    deviceRemainingActiveTime = deviceActiveTime;
+  }
 
   // run detection / other states' logic
 
