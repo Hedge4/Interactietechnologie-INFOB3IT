@@ -18,7 +18,7 @@ unsigned long deviceTimestamp = 0;
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
 unsigned long deviceActiveTime = 60000;  //device will stay on for 60 seconds upon sensing something.
-unsigned long  deviceRemainingActiveTime = 60000;
+unsigned long  deviceActiveTimeCountdown = 0;
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -241,74 +241,81 @@ void deviceLoop(unsigned long curTime) {
     ||  magneticSensor.changed
     ||  distSensor.changed
     ||  lightSensor.changed){
-    deviceRemainingActiveTime = deviceActiveTime;
+    deviceActiveTimeCountdown = deviceActiveTime;
   }
 
-  switch(deviceState){
-    case 0:
-      break;
-    case 1:
-      bool doorIsClosed = magneticSensor.pressed;
-      bool lightIsOn = (lightSensor.lastReading > 100);  //LOWLIGHTLEVELTHRESHOLD HERE
+  //only detection device state needs extra handling
+  if(deviceState == 1){
+    bool doorIsClosed = magneticSensor.pressed;
+    bool lightIsOn = (lightSensor.lastReading > 100);  //LOWLIGHTLEVELTHRESHOLD HERE
+    
+    //tick the person goes sitting on toilet, sensed with distancesensor
+    if(distSensor.changed && distSensor.triggered){
+      personOnToiletTimestamp = curTime;
+      personIsOnToilet = true;
+    }
+
+    //tick the person moves away from toilet, sensed with distancesensor
+    if(personIsOnToilet && distSensor.changed && !distSensor.triggered){
+      toiletTime = curTime - personOnToiletTimestamp;
+      personIsOnToilet = false;
+
+      //decide if this was a long or short visit
+      if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
+        toiletUseCase = 2;
+      }
+      else if(toiletTime > personOnToiletLongThreshold){
+        toiletUseCase = 3;
+      }
+    }
+
+    //decision logic
+    if(doorIsClosed && !lightIsOn){
+      //assume noone is here when light is off AND door is closed
+      //here info needs to be gathered for making decision (as this happens at end of visit)
       
-      //tick the person goes sitting on toilet, sensed with distancesensor
-      if(distSensor.changed && distSensor.triggered){
-        personOnToiletTimestamp = curTime;
-        personIsOnToilet = true;
+      if(toiletUseCase != 0){
+        changeDeviceState(toiletUseCase);
       }
-
-      //tick the person moves away from toilet, sensed with distancesensor
-      if(personIsOnToilet && distSensor.changed && !distSensor.triggered){
-        toiletTime = curTime - personOnToiletTimestamp;
-        personIsOnToilet = false;
-
-        //decide if this was a long or short visit
-        if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
-          toiletUseCase = 2;
-        }
-        else if(toiletTime > personOnToiletLongThreshold){
-          toiletUseCase = 3;
-        }
-      }
-
-      //decision logic
-      if(doorIsClosed && !lightIsOn){
-        //assume noone is here when light is off AND door is closed
-        //here info needs to be gathered for making decision (as this happens at end of visit)
-        
-        if(toiletUseCase != 0){
-          changeDeviceState(toiletUseCase);
+      else{
+        //check if motionsensor went off much during visit. If so, cleaning happend. 
+        if(motionSensor.motionsSensed > 10) {     //THRESHOLD HERE
+          changeDeviceState(4);
         }
         else{
-          //check if motionsensor went off much during visit. If so, cleaning happend. 
-          if(motionSensor.motionsSensed > 10) {     //THRESHOLD HERE
-            changeDeviceState(4);
-          }
-          else{
-            //False positive case
-            changeDeviceState(0);
-          }
+          //False positive case
+          changeDeviceState(0);
         }
       }
-      else if(doorIsClosed && lightIsOn && personIsOnToilet){
-        //toilet is in use here, stay put
+    }
+    else if(doorIsClosed && lightIsOn && personIsOnToilet){
+      //toilet is in use here, stay put
+    }
+    else if(doorIsClosed && lightIsOn){
+      //person is doing something different in the toilet
+    }
+
+    //force decision after active timer has elapsed
+    if((compareTimestamps(curTime, deviceActiveTimeCountdown, deviceActiveTime))){
+      if(toiletUseCase != 0){
+        changeDeviceState(toiletUseCase);
       }
-      else if(doorIsClosed && lightIsOn){
-        //person is doing something different in the toilet
+      else{
+        //check if motionsensor went off much during visit. If so, cleaning happend. 
+        if(motionSensor.motionsSensed > 10) {     //THRESHOLD HERE
+          changeDeviceState(4);
+        }
+        else{
+          //False positive case
+          changeDeviceState(0);
+        }
       }
-      else {
-        //TODO: implement edge cases for person who leaves door open, light on
-      }
-      break;
+    } 
+
   }
 
 
-  //not sure if needed
-  deviceRemainingActiveTime -= curTime;
-  //go back to idle once device is no longer active
-  if (deviceRemainingActiveTime <= 0){
-    changeDeviceState(0);
-  }
+  
 
   updateLedsOutput(curTime);
 }
