@@ -55,8 +55,8 @@ void Knop::update(int volt, unsigned long curTime) {
 
 DistanceSensor::DistanceSensor(int interval) {
   senseInterval = interval;
-  closeByThreshold = 100;
-  farAwayThreshold = 400;
+  noOneHereThreshold = 130;
+  
 }
 
 void DistanceSensor::update(unsigned long curTime) {
@@ -67,12 +67,12 @@ void DistanceSensor::update(unsigned long curTime) {
   lastSensed = curTime;
     
   int reading = sonar.ping_cm();
+
   //only update lastreading if differnece is greater than the readsensitivity
   if (abs(reading - lastReading) > readSensitivity){
-    lastReading = reading;
     changed = true;
-    
-    if(lastReading > closeByThreshold && lastReading < farAwayThreshold){
+    lastReading = reading;
+    if(lastReading < noOneHereThreshold){
     triggered = true;
     }
   }
@@ -80,7 +80,7 @@ void DistanceSensor::update(unsigned long curTime) {
     changed = false;
   }
 
-  if(!(lastReading > closeByThreshold && lastReading < farAwayThreshold)){
+  if(lastReading > noOneHereThreshold){
     triggered = false;
   }
 

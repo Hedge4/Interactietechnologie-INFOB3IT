@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "Toilet_Drizzler_9000.h"
 #include "classes.h"
-
+#include "sprayFunctions.h"
 
 // methods
 void deviceLoop(unsigned long curTime);

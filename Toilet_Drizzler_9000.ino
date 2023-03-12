@@ -36,8 +36,8 @@ Knop magneticSensor(758, 778); //value of 1023 * 3/4 = ~768
 
 //initialise the other sensors, intervals chosen arbitrarely
 DistanceSensor distSensor(1000);
-LightSensor lightSensor(500);
-MotionSensor motionSensor(10);
+LightSensor lightSensor(1000);
+MotionSensor motionSensor(1000);
 TemperatureSensor temperatureSensor(1000);
 
 
@@ -108,7 +108,6 @@ void loop() {
 
   alwaysUpdate(curTime);
   alwaysRun(curTime);
-
 }
 
 
@@ -141,12 +140,9 @@ void alwaysRun(unsigned long curTime) {
     sprayButtonUpdate(sprayButton.pressed);
   }
   if (magneticSensor.changed) {
-    if (magneticSensor.pressed) {
-      Serial.println("Magnet on");
-    } else {
-      Serial.println("Magnet off");
-    }
     // TODO reference magnet update method
   }
+
+
 }
 

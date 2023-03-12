@@ -38,10 +38,9 @@ public:
 //distancesensor
 class DistanceSensor : public Sensor {
 public:     
-  int readSensitivity = 10;   //only update lastReading when reading differs by at least readSensitivity
+  int readSensitivity = 30;   //only update lastReading when reading differs by at least readSensitivity
   //THESE logic should go to devicefunctions:
-  int closeByThreshold;       //distinguishes between person closeby for toilet use
-  int farAwayThreshold;       //and far away for when person leaves the toilet
+  int noOneHereThreshold;    //holds value when noone sits on the toilet
   DistanceSensor(int interval);
   void update(unsigned long curTime);
 };
@@ -49,7 +48,7 @@ public:
 //lightsensor
 class LightSensor : public Sensor {
 public:
-  int readSensitivity = 30;   //only update lastReading when reading differs by at least readSensitivity
+  int readSensitivity = 100;   //only update lastReading when reading differs by at least readSensitivity
   LightSensor(int interval);
   void update(unsigned long curTime);
 };

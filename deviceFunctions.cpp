@@ -1,5 +1,6 @@
 #include "deviceFunctions.h"
 
+
 /////////////////////////
 //    CONFIGURATION    //
 /////////////////////////
@@ -17,8 +18,8 @@ unsigned long deviceTimestamp = 0;
 //timing related vars
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
-unsigned long deviceActiveTime = 60000;  //device will stay on for 60 seconds upon sensing something.
-unsigned long  deviceActiveTimeCountdown = 0;
+unsigned long deviceActiveTime = 10000;  //device will stay on for 60 seconds upon sensing something.
+unsigned long  deviceActiveTimestamp = 0;
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -31,16 +32,14 @@ bool yellowLedOn = false, greenLedOn = false;     // actual calculated outputs f
 bool lastLedsPinmode = true, lastLedOutput = LOW;
 unsigned long ledsTimestamp = 0, ledsDelay = 40; // when leds logic was last checked and how long the delay in between checks should be
 
-//aanpak wordt om zodra de deur open gaat (en het licht aan)
-//een timer wordt gestart die 90 seconden aftelt.
-//binnen 90 seconden worden verschillende kenmerken bewaard in bools:
-//doorStaysOpen?
-//LightStaysOn?
-//MotionNearToilet? -> PersonNearbyToilet?/PersonFarAwayOfToilet?
-
-//differentiate between going to the toilet with open door
-//and cleaning the toilet by checking motion and distance
-
+//vars for detecting
+unsigned long personOnToiletTimestamp = 0;  //linked to distance sensor, stars up when person is sitting on toilet
+unsigned long toiletTime = 0;               //save length of sitting-on-toilet visit
+int personOnToiletShortThreshold = 10000;   //threshold for short visit
+int personOnToiletLongThreshold = 100000;   //threhsold for long visit
+bool personIsOnToilet = false;
+int toiletUseCase = 0;                      //0:deciding, 2:short, 3:long, specifically for distanceSensor
+int doorMovements = 0;
 
 
 /////////////////////////
@@ -56,15 +55,21 @@ void changeDeviceState(int newState) {
     // state initialisation logic
     switch (newState) {
       case 0:
+        //reset sensors
+        motionSensor.resetSensor();   
+        personIsOnToilet = false;
+        toiletUseCase = 0;
         break;
-      case 1:
-//        deviceStartsDetectingTimestamp = millis();
+      case 1:    
         break;
       case 2:
+        startSpray(1);
         break;
       case 3:
+        startSpray(2);
         break;
       case 4:
+        deviceActiveTimestamp = deviceTimestamp; //last reset on this before it just counts down
         break;
     }
   }
@@ -219,14 +224,6 @@ String deviceStateString() {
 //          LOOP          //
 ////////////////////////////
 
-//TODO: MOVE THIS TO TOP
-unsigned long personOnToiletTimestamp = 0;  //linked to distance sensor, stars up when person is sitting on toilet
-unsigned long toiletTime = 0;               //save length of sitting-on-toilet visit
-int personOnToiletThreshold = 5000;         //threshold for random interferences
-int personOnToiletShortThreshold = 30000;   //threshold for short visit
-int personOnToiletLongThreshold = 120000;   //threhsold for long visit
-bool personIsOnToilet = false;
-int toiletUseCase = 0;                      //0:deciding, 2:short, 3:long, specifically for distanceSensor
 
 void deviceLoop(unsigned long curTime) {
   // update sensors
@@ -240,84 +237,111 @@ void deviceLoop(unsigned long curTime) {
   if(   motionSensor.changed 
     ||  magneticSensor.changed
     ||  distSensor.changed
-    ||  lightSensor.changed){
-    deviceActiveTimeCountdown = deviceActiveTime;
+    ||  lightSensor.changed){      
+    if(deviceState == 1){
+      //only refresh active time whilst in detecting mode
+      deviceActiveTimestamp = curTime;
+    }
+    //if idle, enter active state
+    if(deviceState == 0){
+      changeDeviceState(1);
+    }
+    if(motionSensor.changed){
+      //Serial.println("MOTION");
+      //Serial.println(motionSensor.motionsSensed);      
+    }
+    if(magneticSensor.changed){
+      doorMovements++;
+    }
+    if(distSensor.changed){
+      //Serial.println("DIST");
+      //Serial.println(distSensor.lastReading);
+    }
+    if(lightSensor.changed){
+      //Serial.println("LIGHT");
+      //Serial.println(lightSensor.lastReading);
+    }
+  }
+  else{
+    //Serial.println("NIL");
   }
 
   //only detection device state needs extra handling
-  if(deviceState == 1){
-    bool doorIsClosed = magneticSensor.pressed;
-    bool lightIsOn = (lightSensor.lastReading > 100);  //LOWLIGHTLEVELTHRESHOLD HERE
-    
-    //tick the person goes sitting on toilet, sensed with distancesensor
-    if(distSensor.changed && distSensor.triggered){
-      personOnToiletTimestamp = curTime;
-      personIsOnToilet = true;
-    }
-
-    //tick the person moves away from toilet, sensed with distancesensor
-    if(personIsOnToilet && distSensor.changed && !distSensor.triggered){
-      toiletTime = curTime - personOnToiletTimestamp;
-      personIsOnToilet = false;
-
-      //decide if this was a long or short visit
-      if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
-        toiletUseCase = 2;
-      }
-      else if(toiletTime > personOnToiletLongThreshold){
-        toiletUseCase = 3;
-      }
-    }
-
-    //decision logic
-    if(doorIsClosed && !lightIsOn){
-      //assume noone is here when light is off AND door is closed
-      //here info needs to be gathered for making decision (as this happens at end of visit)
+  switch (deviceState){
+    case 0:
+      break;
+    case 1:
+      bool doorIsClosed = magneticSensor.pressed;
+      bool lightIsOn = (lightSensor.lastReading > 300);  //LOWLIGHTLEVELTHRESHOLD HERE
       
-      if(toiletUseCase != 0){
-        changeDeviceState(toiletUseCase);
+      //tick the person goes sitting on toilet, sensed with distancesensor
+      if(distSensor.changed && distSensor.triggered && !personIsOnToilet){  
+        personOnToiletTimestamp = curTime;
+        personIsOnToilet = true;
       }
-      else{
-        //check if motionsensor went off much during visit. If so, cleaning happend. 
-        if(motionSensor.motionsSensed > 10) {     //THRESHOLD HERE
-          changeDeviceState(4);
+
+      //tick the person moves away from toilet, sensed with distancesensor
+      if(personIsOnToilet && distSensor.changed && !distSensor.triggered){
+        toiletTime = curTime - personOnToiletTimestamp;
+        personIsOnToilet = false;
+
+        //decide if this was a long or short visit
+        if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
+          toiletUseCase = 2;
+        }
+        else if(toiletTime > personOnToiletLongThreshold){
+          toiletUseCase = 3;
+        }
+      }
+
+      //decision logic
+      if(   doorIsClosed && !lightIsOn 
+        || (compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime))){
+        
+        //check for inactivityTimer
+        //assume noone is here when light is off AND door is closed or no activity is sensed   
+        //this means we can get baseline of distsensor :)
+        distSensor.noOneHereThreshold = distSensor.lastReading;
+        //here info needs to be gathered for making decision (as this happens at end of visit)    
+        if(toiletUseCase != 0){
+          changeDeviceState(toiletUseCase);
         }
         else{
-          //False positive case
-          changeDeviceState(0);
+          //check if motionsensor went off much during visit. If so, cleaning happend. 
+          if(motionSensor.motionsSensed > 15) {     //THRESHOLD HERE
+            changeDeviceState(4);
+          }
+          else{
+            //False positive case
+            changeDeviceState(0);
+          }
         }
       }
-    }
-    else if(doorIsClosed && lightIsOn && personIsOnToilet){
-      //toilet is in use here, stay put
-    }
-    else if(doorIsClosed && lightIsOn){
-      //person is doing something different in the toilet
-    }
-
-    //force decision after active timer has elapsed
-    if((compareTimestamps(curTime, deviceActiveTimeCountdown, deviceActiveTime))){
-      if(toiletUseCase != 0){
-        changeDeviceState(toiletUseCase);
+      //else if(doorIsClosed && lightIsOn && personIsOnToilet){
+        //toilet is in use here, stay put
+      //}
+      //else if(doorIsClosed && lightIsOn){
+        //person is doing something different in the toilet
+      //}
+      break;
+    case 2:
+      if(!sprayComing())
+        changeDeviceState(0);    
+      break;
+    case 3:
+      if(!sprayComing())
+        changeDeviceState(0);
+      break;
+    case 4:
+      if(compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime)){
+        changeDeviceState(0);        
       }
-      else{
-        //check if motionsensor went off much during visit. If so, cleaning happend. 
-        if(motionSensor.motionsSensed > 10) {     //THRESHOLD HERE
-          changeDeviceState(4);
-        }
-        else{
-          //False positive case
-          changeDeviceState(0);
-        }
-      }
-    } 
-
+      break;      
   }
-
-
   
 
   updateLedsOutput(curTime);
+
 }
 
 
