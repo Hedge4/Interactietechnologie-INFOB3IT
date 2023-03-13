@@ -40,7 +40,11 @@ class DistanceSensor : public Sensor {
 public:     
   int readSensitivity = 30;   //only update lastReading when reading differs by at least readSensitivity
   //THESE logic should go to devicefunctions:
-  int noOneHereThreshold;    //holds value when noone sits on the toilet
+  int noOneHereThreshold = 110;    //holds value when noone sits on the toilet
+  int readings[6] = { };
+  int readIndex;
+  int unTriggerInterval = 2000; //only set trigger false two seconds after trigger was last active
+  unsigned long lastTriggered;  //remember when last triggered
   DistanceSensor(int interval);
   void update(unsigned long curTime);
 };
@@ -52,12 +56,14 @@ public:
   int lowLightThreshold = 100;
   LightSensor(int interval);
   void update(unsigned long curTime);
+  bool isLightOn();
 };
 
 
 class MotionSensor : public Sensor {
 public:
-  unsigned long motionsSensed; //keep track of how much motion is being sensed. If high, likely cleaning 
+  unsigned long motionsSensed;      //keep track of how much motion is being sensed. If high, likely cleaning 
+  unsigned long inActiveInterval = 2000;   //used for Trigger, if no motion sent over period of time, become untriggered
   MotionSensor(int interval);
   void update(unsigned long curTime);  
   void resetSensor();

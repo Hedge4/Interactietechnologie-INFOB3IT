@@ -56,10 +56,13 @@ void Knop::update(int volt, unsigned long curTime) {
 DistanceSensor::DistanceSensor(int interval) {
   senseInterval = interval;
   noOneHereThreshold = 130;
+  readIndex = 0;
+  
   
 }
 
 void DistanceSensor::update(unsigned long curTime) {
+
   //check if sensor can do its sensing
   if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
     return;
@@ -68,12 +71,13 @@ void DistanceSensor::update(unsigned long curTime) {
     
   int reading = sonar.ping_cm();
 
-  //only update lastreading if differnece is greater than the readsensitivity
+  //only update lastreading if difference is greater than the readsensitivity
   if (abs(reading - lastReading) > readSensitivity){
     changed = true;
     lastReading = reading;
     if(lastReading < noOneHereThreshold){
     triggered = true;
+    lastTriggered = curTime;
     }
   }
   else {
@@ -81,7 +85,25 @@ void DistanceSensor::update(unsigned long curTime) {
   }
 
   if(lastReading > noOneHereThreshold){
-    triggered = false;
+    if(compareTimestamps(curTime,lastTriggered,unTriggerInterval))
+      triggered = false;
+  }
+
+  //if 60 seconds of time has elapsed, do a measurement
+  //so we can get standards
+  if(curTime % 60000 == 0){
+    readings[readIndex] = reading;
+    readIndex++;
+    //loop readIndex
+    if(readIndex >= 6){
+      readIndex = 0;
+      //calculate average reading, remove a bit and set that as new threshold
+      int sum = 0;
+      for(int i = 0; i < 6; i++)        
+        sum += readings[i];
+      
+      noOneHereThreshold = (sum / 6) - 10;
+    }
   }
 
 }
@@ -108,29 +130,47 @@ void LightSensor::update(unsigned long curTime) {
   }
 }
 
+bool LightSensor::isLightOn(){
+  return (lastReading > lowLightThreshold);
+}
+
 
 MotionSensor::MotionSensor(int interval){
   senseInterval = interval;
   motionsSensed = 0;  //during frame of detection, count how many times motion is detected
+  inActiveInterval;
+  triggered = false;
 }
 
 void MotionSensor::update(unsigned long curTime){
   //check if sensor can do its sensing
-  if (!(compareTimestamps(curTime, lastSensed, senseInterval) && active)) {
+  if(!active){
     return;
   }
-  lastSensed = curTime;
+  if (!compareTimestamps(curTime, lastSensed, senseInterval)) {   
+    if(compareTimestamps(curTime, lastSensed, inActiveInterval)){
+      triggered = false;
+    }
+    return;
+  }
   //read the sensor
   int reading = digitalRead(motionSensorPin);  
-  if (reading != lastReading){
+  if(reading != lastReading)    
+  {
+    Serial.println("DIFF");
+  }  
+  if (reading != lastReading && changed == false){
     changed = true;
     if(reading == HIGH)  {
+      triggered = true;
       motionsSensed++;
     } 
   }
   else{
     changed = false;
   }
+
+  lastSensed = curTime;
   lastReading = reading;  
     
 }

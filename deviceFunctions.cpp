@@ -19,7 +19,6 @@ unsigned long deviceTimestamp = 0;
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
 unsigned long deviceActiveTime = 10000;  //device will stay on for x seconds upon sensing something.
-unsigned long  deviceActiveTimestamp = 0;
 unsigned long forcedDecisionInterval = 10000;   //device will force 
 unsigned long deviceCleaningInterval = 600000;  //estimate time of 10 minutes for cleaning the toilet
 
@@ -226,69 +225,50 @@ String deviceStateString() {
 //          LOOP          //
 ////////////////////////////
 
-bool lightIsOn = false;
-bool doorIsClosed = false;
+//bool doorIsClosed = false;
+//      doorIsClosed = magneticSensor.longPress;
+//TODO: make magnet forced interrupt, will help decision logic
+bool personHasGoneToToilet = false;
 
 void deviceLoop(unsigned long curTime) {
-  if(curTime % 1000 == 0){
-    //Serial.println(deviceActiveTimestamp);
-  }
   // update sensors
   motionSensor.update(curTime);
   distSensor.update(curTime);
   temperatureSensor.update(curTime);
   lightSensor.update(curTime);
   //magneticSensor wordt al geupdate in alwaysUpdate loop
+/*
+//TESTING
+  if(!motionSensor.triggered){
+    Serial.println("NOTRIGGER");
+    Serial.println(motionSensor.motionsSensed);
+  }
+*/
 
-  //refresh active time
+  //check if sensors sensed change  
   if(   motionSensor.changed 
     ||  magneticSensor.changed
     ||  distSensor.changed
     ||  lightSensor.changed){      
-    if(deviceState == 1){
-      //only refresh active time whilst in detecting mode
-      deviceActiveTimestamp = curTime;
-    }
-    //if idle, enter active state
-    if(deviceState == 0){
+    //check if room is 'in use' -> light is on and motion has been detected. If yes, go to detection mode
+    if(deviceState == 0 && lightSensor.isLightOn() && motionSensor.triggered){
       changeDeviceState(1);
     }
-    if(motionSensor.changed){
-      //Serial.println("MOTION");
-      //Serial.println(motionSensor.motionsSensed);      
-    }
-    if(magneticSensor.changed){
-      doorMovements++;
-    }
-    if(distSensor.changed){
-      //Serial.println("DIST");
-      //Serial.println(distSensor.lastReading);
-    }
-    if(lightSensor.changed){
-      //Serial.println("LIGHT");
-      //Serial.println(lightSensor.lastReading);
-    }
-  }
-  else{
-    //Serial.println("NIL");
   }
 
-  //only detection device state needs extra handling
   switch (deviceState){
     case 0:
+      //do idle stuff
       break;
     case 1:
-      doorIsClosed = magneticSensor.longPress;
-      lightIsOn = (lightSensor.lastReading > lightSensor.lowLightThreshold); 
-      
       //tick the person goes sitting on toilet, sensed with distancesensor
-      if(distSensor.changed && distSensor.triggered && !personIsOnToilet){  
+      if(!personIsOnToilet && distSensor.triggered){  
         personOnToiletTimestamp = curTime;
         personIsOnToilet = true;
       }
 
       //tick the person moves away from toilet, sensed with distancesensor
-      if(personIsOnToilet && distSensor.changed && !distSensor.triggered){
+      if(personIsOnToilet && !distSensor.triggered){
         toiletTime = curTime - personOnToiletTimestamp;
         personIsOnToilet = false;
 
@@ -304,11 +284,14 @@ void deviceLoop(unsigned long curTime) {
       //decision logic
       if(   doorIsClosed && !lightIsOn 
         || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))){
-         
+        //Serial.println("DECISION TIME");
+        //Serial.println(toiletTime);
+        //Serial.println(motionSensor.motionsSensed);
+        //Serial.println(deviceState);
         //check for inactivityTimer
         //assume noone is here when light is off AND door is closed or no activity is sensed   
         //this means we can get baseline of distsensor :)
-        distSensor.noOneHereThreshold = distSensor.lastReading - 20;
+        //distSensor.noOneHereThreshold = distSensor.lastReading - 20;
         //here info needs to be gathered for making decision (as this happens at end of visit)    
         if(toiletUseCase != 0){
           changeDeviceState(toiletUseCase);
@@ -320,8 +303,6 @@ void deviceLoop(unsigned long curTime) {
           }
           else{
             //False positive case
-            Serial.println("FP");
-            
             changeDeviceState(0);
           }
         }
@@ -351,7 +332,10 @@ void deviceLoop(unsigned long curTime) {
   }
   
 
-  updateLedsOutput(curTime);
+  //DIST TESTING
+
+  
+  //updateLedsOutput(curTime);
 
 }
 
