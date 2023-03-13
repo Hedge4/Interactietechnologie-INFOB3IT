@@ -21,6 +21,7 @@ unsigned long deviceTimestamp = 0;
 //int deviceEvaluationInterval = 3;
 unsigned long deviceActiveTime = 120000;  //device will stay on for x seconds upon sensing something.
 unsigned long deviceCleaningInterval = 180000;  //estimate time of 10 minutes for cleaning the toilet
+unsigned long deviceCooldown = 5000;   
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -43,6 +44,7 @@ int toiletUseCase = 0;                      //0:deciding, 2:short, 3:long, speci
 int doorMovements = 0;
 bool personHasGoneToToilet = false;
 bool doorClosedDuringVisit = false;
+int motionsForCleaningThreshold = 6;
 
 /////////////////////////
 //      FUNCTIONS      //
@@ -64,16 +66,25 @@ void changeDeviceState(int newState) {
         toiletTime = 0;
         personHasGoneToToilet = false;
         doorClosedDuringVisit = false;
+        //set heartbeat
+        greenLed = 2;        
         break;
-      case 1:    
+      case 1:
+        greenLed = 2;    
         break;
       case 2:
+        greenLed = 0;
         startSpray(1);
         break;
       case 3:
+        greenLed = 0;
         startSpray(2);
         break;
       case 4:
+        greenLed = 1;
+        break;
+      case 5:
+        greenLed = 1;
         break;
     }
   }
@@ -218,6 +229,8 @@ String deviceStateString() {
       return "Num2";
     case 4:
       return "Cleaning";
+    case 5:
+      return "Cooldown";
     default:
       return "Unknown";
   }
@@ -241,8 +254,6 @@ void deviceLoop(unsigned long curTime) {
   lightSensor.update(curTime);
   //magneticSensor already gets updated in other loop
 
-  //check if sensors sensed change  
-  
   if(deviceState == 0 && motionSensor.triggered && lightSensor.isLightOn()){
       changeDeviceState(1);
       return;
@@ -251,78 +262,73 @@ void deviceLoop(unsigned long curTime) {
   switch (deviceState){
     case 0:
       break;
-    case 1:
+    case 1:    
       //tick the person goes sitting on toilet, sensed with distancesensor
-      if(!personIsOnToilet && distSensor.triggered && !personHasGoneToToilet){  
+      if(!personIsOnToilet && distSensor.triggered){  
+        personHasGoneToToilet = false;
         personOnToiletTimestamp = curTime;
         personIsOnToilet = true;
         doorClosedDuringVisit = magneticSensor.pressed;
       }
 
       //tick the person moves away from toilet, sensed with distancesensor
-      if(personIsOnToilet && !distSensor.triggered && !personHasGoneToToilet){
-        toiletTime = curTime - personOnToiletTimestamp;
-        personIsOnToilet = false;
-        personHasGoneToToilet = true;
-        //decide if this was a long or short visit
-        if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
-          //if this was a short visit, determine if cleaning happened by looking at amount of motion
-          //and if the door was closed or open.
-          if(doorClosedDuringVisit){
-            toiletUseCase = 2;    
-          }
-          else if(motionSensor.motionsSensed < 10){
-            toiletUseCase = 2;
-          }
-          else{
-            toiletUseCase = 4;
-          }
+      if(personIsOnToilet && !distSensor.triggered){  
+        personHasGoneToToilet = true;  
+        int ttReading = curTime - personOnToiletTimestamp;
+        if(ttReading > toiletTime){
+          toiletTime = ttReading;  //keep track of largest toilettime
+          personIsOnToilet = false;
         }
-        else if(toiletTime > personOnToiletLongThreshold){
-          toiletUseCase = 3;
-        }
+        
       }
 
       //decision logic
       //make decision when toilet is not in use -> light is off
       //or time has elapsed
-      if(!(lightSensor.isLightOn()) 
+      //only make decision onces motionSensor has cooled off
+      if((!(lightSensor.isLightOn() || motionSensor.triggered)  && !motionSensor.triggered && personHasGoneToToilet)
         || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))){    
-          //NOW HANDLED INSIDE
-        //if(motionSensor.motionsSensed > 15){
-        //  //motionsensor fired a lot, a long time was spent on the toilet with a lot of motion, so cleaning happened
-        //  changeDeviceState(4);
-        //}  
-        if(toiletUseCase != 0){
-          //toiletUseCase was already linked to correct state
-          changeDeviceState(toiletUseCase);
+        
+        //check amount of motion. if A lot happened, cleaning has happend or just a long visit
+        if(motionSensor.motionsSensed >= motionsForCleaningThreshold && !doorClosedDuringVisit){
+          changeDeviceState(4);
+        }            
+        //decide if this was a long or short visit
+        else if(toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold){
+          changeDeviceState(2);   
         }
-        else{
-          //false positive       
-          changeDeviceState(0);
+        else if(toiletTime > personOnToiletLongThreshold){
+          changeDeviceState(3);
         }
+        Serial.println("Duration of visit");
+        Serial.println(toiletTime);
+        Serial.println("Type of visit");
+        Serial.println(toiletUseCase);
+        Serial.println("Motions sensed");
+        Serial.println(motionSensor.motionsSensed);
       }
       break;
     case 2:
       if(!sprayComing())
-        changeDeviceState(0);    
+        changeDeviceState(5);    
       break;
     case 3:
       if(!sprayComing())
-        changeDeviceState(0);
+        changeDeviceState(5);
       break;
     case 4:
       //just wait untill enough time has elapsed, then change state back to idle
       if (compareTimestamps(curTime, deviceTimestamp, deviceCleaningInterval)){
-        changeDeviceState(0);        
+        changeDeviceState(5);        
       }                
-      break;      
+      break;
+    case 5:
+      if(compareTimestamps(curTime,deviceTimestamp,deviceCooldown)){
+        changeDeviceState(0);
+      }
   }
   
-
-
-  
-  //updateLedsOutput(curTime);
+  updateLedsOutput(curTime);
 
 }
 

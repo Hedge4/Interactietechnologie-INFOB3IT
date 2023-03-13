@@ -55,7 +55,6 @@ void Knop::update(int volt, unsigned long curTime) {
 
 DistanceSensor::DistanceSensor(int interval) {
   senseInterval = interval;
-  noOneHereThreshold = 130;
   readIndex = 0;
   
   

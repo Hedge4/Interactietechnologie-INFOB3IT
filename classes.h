@@ -43,7 +43,7 @@ public:
   int noOneHereThreshold = 110;    //holds value when noone sits on the toilet
   int readings[6] = { };
   int readIndex;
-  int unTriggerInterval = 10000; //only set trigger false two seconds after trigger was last active
+  int unTriggerInterval = 5000; //only set trigger false two seconds after trigger was last active
   unsigned long lastTriggered;  //remember when last triggered
   DistanceSensor(int interval);
   void update(unsigned long curTime);
@@ -63,7 +63,7 @@ public:
 class MotionSensor : public Sensor {
 public:
   unsigned long motionsSensed;      //keep track of how much motion is being sensed. If high, likely cleaning 
-  unsigned long inActiveInterval = 20000;   //used for Trigger, if no motion sent over period of time, become untriggered
+  unsigned long inActiveInterval = 4000;   //used for Trigger, if no motion sent over period of time, become untriggered
   unsigned long lastHigh;   
   MotionSensor(int interval);
   void update(unsigned long curTime);  
