@@ -138,7 +138,7 @@ bool LightSensor::isLightOn(){
 MotionSensor::MotionSensor(int interval){
   senseInterval = interval;
   motionsSensed = 0;  //during frame of detection, count how many times motion is detected
-  inActiveInterval;
+  lastHigh = 0;  
   triggered = false;
 }
 
@@ -148,20 +148,20 @@ void MotionSensor::update(unsigned long curTime){
     return;
   }
   if (!compareTimestamps(curTime, lastSensed, senseInterval)) {   
-    if(compareTimestamps(curTime, lastSensed, inActiveInterval)){
-      triggered = false;
-    }
     return;
+  }
+  lastSensed = curTime;
+  
+  if(compareTimestamps(curTime, lastHigh, inActiveInterval)){
+    triggered = false;
   }
   //read the sensor
   int reading = digitalRead(motionSensorPin);  
-  if(reading != lastReading)    
-  {
-    Serial.println("DIFF");
-  }  
-  if (reading != lastReading && changed == false){
+  
+  if (reading != lastReading){
     changed = true;
     if(reading == HIGH)  {
+      lastHigh = curTime;
       triggered = true;
       motionsSensed++;
     } 
@@ -170,7 +170,6 @@ void MotionSensor::update(unsigned long curTime){
     changed = false;
   }
 
-  lastSensed = curTime;
   lastReading = reading;  
     
 }
