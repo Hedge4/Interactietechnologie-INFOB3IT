@@ -12,6 +12,8 @@
   4 --> 'devmode': Shows debugging info
 */
 int menuState = 0;
+bool startup = true;                    // lets display state display something different on startup
+int startupDuration = 15 * 1000;        // how long the startup text should be displayed
 unsigned long menuTimestamp = 0;        // when menuState last changed
 
 String topText, bottomText;             // top and bottom row of lcd screen
@@ -428,6 +430,15 @@ void menuButtonUpdate(bool pressed, bool longPressed) {
         changeMenuState(1);
         return;
       case 1:
+        if (startup) {
+          // quits early out of startup text
+          startup = false;
+          topText = displayStateTopText();
+          bottomText = displayStateBottomText();
+          lcd.clear();
+          setText();
+          return;
+        }
         changeMenuState(2);
         return;
       case 2:
@@ -455,6 +466,15 @@ void okButtonUpdate(bool pressed) {
         changeMenuState(1);
         return;
       case 1:
+        if (startup) {
+          // quits early out of startup text
+          startup = false;
+          topText = displayStateTopText();
+          bottomText = displayStateBottomText();
+          lcd.clear();
+          setText();
+          return;
+        }
         changeMenuState(2);
         return;
       case 2:
@@ -474,6 +494,17 @@ void okButtonUpdate(bool pressed) {
 void activateScreen() {
   // only does something if screen was turned off
   if (menuState == 0) {
+    if (startup) {
+      menuState = 1; // startup is part of the display state but the text is only set here
+      powerBacklight(true);
+      // startup initialisation text
+      topText = "~ De Ultieme Toiletervaring!";
+      bottomText = "Toilet Drizzler";
+      lcd.clear();
+      setText();
+      return;
+    }
+
     changeMenuState(1);
   }
 }
@@ -502,6 +533,19 @@ void menuLoop(unsigned long curTime) {
       }
     }
 
+    if (startup) {
+      // after this initialisation time, quits out of startup text
+      if (curTime > startupDuration) {
+        startup = false;
+        topText = displayStateTopText();
+        bottomText = displayStateBottomText();
+        lcd.clear();
+        setText();
+      }
+
+      return;
+    }
+
     // if device/state info on the display changed
     if (compareTimestamps(curTime, displayRefreshFastTime, displayRefreshFast)) {
       displayRefreshFastTime = curTime;
@@ -521,14 +565,15 @@ void menuLoop(unsigned long curTime) {
         setText(false); // false means we don't update the scroll position
       }
     }
+    return;
   }
 
   // from settings or config state, go back to display state if inactive for too long
   if (menuState == 2 || menuState == 3) {
     if (compareTimestamps(curTime, menuTimestamp, leaveConfigDelay)) {
       changeMenuState(1);
-      return;
     }
+    return;
   }
 
   if (menuState == 4) {
@@ -541,7 +586,6 @@ void menuLoop(unsigned long curTime) {
     // if inactive for longer than leaveDebugDelay, go back to the display state
     if (compareTimestamps(curTime, menuTimestamp, leaveDebugDelay)) {
       changeMenuState(1);
-      return;
     }
   }
 }
