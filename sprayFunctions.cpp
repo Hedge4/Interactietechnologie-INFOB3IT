@@ -12,7 +12,7 @@ bool spraying = false;
 bool waiting = false;
 int plannedSpraysLeft = 0;
 unsigned long sprayTimestamp = 0;
-//bool buttonPressed = false;
+// bool buttonPressed = false;
 
 
 ////////////////////////////

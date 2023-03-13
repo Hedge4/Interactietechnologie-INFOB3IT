@@ -17,11 +17,11 @@ const int distPin = 8;          // only one pin needed thanks to newPing library
 const int ledsPin = 9;
 const int motionSensorPin = 10; // also connected to built-in led, needs testing
 
-//initialise sonar for distance sensor
-//get distance with sonar.ping_cm, if not in max distance returns 0, is blocking!
+// initialise sonar for distance sensor
+// get distance with sonar.ping_cm, if not in max distance returns 0, is blocking!
 NewPing sonar(distPin, distPin, 200);
 
-//initialse temperature pin workings
+// initialse temperature pin workings
 OneWire oneWire(temperaturePin);
 DallasTemperature dallasTemperatureSensor(&oneWire);
 
@@ -31,14 +31,14 @@ Knop menuButton(0, 10);   // value of ~0
 Knop okButton(501, 521);   // value of 1023 * 1/2 = ~511
 Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
 
-//connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
-Knop magneticSensor(758, 778); //value of 1023 * 3/4 = ~768
+// connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
+Knop magneticSensor(758, 778); // value of 1023 * 3/4 = ~768
 
-//initialise the other sensors, intervals chosen arbitrarely
+// initialise the other sensors, intervals chosen arbitrarely
 DistanceSensor distSensor(50);
 LightSensor lightSensor(1000);
 MotionSensor motionSensor(100);
-TemperatureSensor temperatureSensor(1000);
+TemperatureSensor temperatureSensor(2000);
 
 
 
@@ -52,7 +52,7 @@ void setup() {
   pinMode(ldrPin, INPUT);
   pinMode(ledsPin, INPUT);  // setting leds pin as an input on startup turns both leds off
   pinMode(sprayPin, OUTPUT);
-  //no configuring needed for distance sensor (no downsides encountered whilst testing)
+  // no configuring needed for distance sensor (no downsides encountered whilst testing)
 
   // configure our output pins
   pinMode(lcdBacklightPin, OUTPUT);
@@ -139,10 +139,4 @@ void alwaysRun(unsigned long curTime) {
   if (sprayButton.changed) {
     sprayButtonUpdate(sprayButton.pressed);
   }
-  if (magneticSensor.changed) {
-    // TODO reference magnet update method
-  }
-
-
 }
-
