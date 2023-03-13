@@ -6,6 +6,8 @@
 
 int sprayDuration = 25 * 1000; // 25 seconds
 int pauseDuration = 5 * 1000; // 5 seconds
+unsigned long delayBeforeSpray = 0;
+unsigned long sprayDelayStartTime;
 
 // current spray information
 bool spraying = false;
@@ -40,11 +42,28 @@ void sprayLoop(unsigned long curTime) {
     // stop waiting if we've reached pauseDuration
     if (compareTimestamps(curTime, sprayTimestamp, pauseDuration)) {
       waiting = false;
-      if (plannedSpraysLeft > 0) {
+      // if there are more sprays left and there's no delay set, start spraying again
+      if (plannedSpraysLeft > 0 && delayBeforeSpray == 0) {
         if (spraysLeft > 0) plannedSpraysLeft--;
         startSpray();
       } else {
         Serial.println("No more sprays, now idle.");
+      }
+    }
+  } else {
+    // check if there is a delay before we need to start spraying again and if it's elapsed
+    if (delayBeforeSpray > 0) {
+      // if no sprays left there's no point in the delay
+      if (spraysLeft <= 0) {
+        delayBeforeSpray = 0;
+        return;
+      }
+
+      // check if delay has elapsed, and if so start a spray
+      if (compareTimestamps(curTime, sprayDelayStartTime, delayBeforeSpray)) {
+        delayBeforeSpray = 0;
+        plannedSpraysLeft--;
+        startSpray();
       }
     }
   }
@@ -75,6 +94,15 @@ void startSpray(int amount) {
   amount--; // first spray is immediately activated so doesn't count
   plannedSpraysLeft = (amount > plannedSpraysLeft) ? amount : plannedSpraysLeft; // whichever value is higher
   startSpray();
+}
+
+void startSpray(int amount, unsigned long waitUntilSpray) {
+  plannedSpraysLeft = (amount > plannedSpraysLeft) ? amount : plannedSpraysLeft; // whichever value is higher
+  cancelSprays(); // we need to wait, so cancel current sprays
+
+  yellowLed = 1; // signify there are more sprays coming
+  delayBeforeSpray = waitUntilSpray; // after this delay, will switch to spraying
+  sprayDelayStartTime = millis();
 }
 
 // stop ongoing and cancel upcoming sprays

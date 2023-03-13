@@ -22,7 +22,7 @@ unsigned long deviceCleaningInterval = 90000;     // estimate time of 10 minutes
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
 
-// TODO change greenLed to 0 and somehow have it show device state instead
+// yellowLed is fully controlled by sprayFunctions, greenLed shows a default heartbeat
 int yellowLed = 0, greenLed = 2;                  // '0' for off, '1' for on, '2' for slow blink, '3' for fast blink
 const int slowBlinkDelay = 3000, fastBlinkDelay = 800;
 unsigned long yellowLedTimestamp = 0, greenLedTimestamp = 0;
@@ -50,6 +50,8 @@ void changeDeviceState(int newState) {
     deviceState = newState;
     deviceTimestamp = millis();
 
+    Serial.println("Changed to deviceState " + String(newState));
+
     // state initialisation logic
     switch (newState) {
       case 0:
@@ -59,21 +61,26 @@ void changeDeviceState(int newState) {
         toiletTime = 0;
         personHasGoneToToilet = false;
         doorClosedDuringVisit = false;
-        // set heartbeat
+        // slow blink for heartbeat
         greenLed = 2;
         break;
       case 1:
-        greenLed = 2;
+        // fast blink while detecting
+        greenLed = 3;
+        activateScreen(); // activate our display
         break;
       case 2:
+        // no led upon detection
         greenLed = 0;
-        startSpray(1);
+        startSpray(spraysShort, spraysShortDelay);
         break;
       case 3:
+        // no led upon detection
         greenLed = 0;
-        startSpray(2);
+        startSpray(spraysLong, spraysLongDelay);
         break;
       case 4:
+        // constant burning led upon cleaning detection
         greenLed = 1;
         break;
     }
@@ -188,6 +195,7 @@ void setSpraysLongDelay(unsigned long newValue) {
 //       GETTERS       //
 /////////////////////////
 
+// used to determine if the screen can be turned off
 bool deviceIsIdle() {
   return (deviceState == 0);
 }
@@ -218,11 +226,6 @@ String deviceStateString() {
 ////////////////////////////
 //          LOOP          //
 ////////////////////////////
-
-// bool doorIsClosed = false;
-//      doorIsClosed = magneticSensor.longPress;
-// TODO: make magnet forced interrupt, will help decision logic
-
 
 void deviceLoop(unsigned long curTime) {
   // update sensors

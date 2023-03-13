@@ -8,8 +8,9 @@
 
 
 void sprayLoop(unsigned long curTime);
-extern void startSpray(int amount);
 void startSpray();
+void startSpray(int amount);
+void startSpray(int amount, unsigned long waitUntilSpray);
 void cancelSprays();
 void sprayButtonUpdate(bool pressed);
 void spraysLeftSetup(int eeAddress, int value);

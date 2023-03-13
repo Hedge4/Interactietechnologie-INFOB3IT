@@ -138,7 +138,7 @@ bool LightSensor::isLightOn() {
 
 MotionSensor::MotionSensor(int interval) {
   senseInterval = interval;
-  motionsSensed = 0;  // during frame of detection, count how many times motion is detected
+  motionsSensed = 0; // during frame of detection, count how many times motion is detected
   lastHigh = 0;
   triggered = false;
 }
@@ -169,7 +169,6 @@ void MotionSensor::update(unsigned long curTime) {
   }
 
   lastReading = reading;
-
 }
 
 void MotionSensor::resetSensor() {

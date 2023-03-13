@@ -187,6 +187,8 @@ void changeMenuState(int newState) {
     menuState = newState;
     menuTimestamp = millis();
 
+    Serial.println("Changed to menuState " + String(newState));
+
     // state initialisation logic
     switch (newState) {
       case 0:
@@ -226,10 +228,8 @@ void changeDebugView(bool changeOption = true) {
   // changeOption decides whether the selected option changed. If false, we only want to update bottomText
   if (changeOption) {
     currentDebugOption++;
-    if (currentDebugOption > 8) currentDebugOption = 0;
+    if (currentDebugOption > 9) currentDebugOption = 0;
   }
-
-  Serial.println(currentDebugOption);
 
   // for each case, topText is only changed if the selected option changed
   switch (currentDebugOption) {
@@ -247,22 +247,26 @@ void changeDebugView(bool changeOption = true) {
       break;
     case 4:
       if (changeOption) topText = "Distance: ";
-      bottomText = "NOT YET SET"; // TODO
+      bottomText = String(distSensor.lastReading);
+      break;
+    case 5:
+      if (changeOption) topText = "Light sensor: ";
+      bottomText = String(lightSensor.lastReading);
       break;
     // our buttons show P (pressed) and L (pressed long)
-    case 5:
+    case 6:
       if (changeOption) topText = "Menu button: ";
       bottomText = "P " + toTrueFalseString(menuButton.pressed) + ", L " + toTrueFalseString(menuButton.longPress);
       break;
-    case 6:
+    case 7:
       if (changeOption) topText = "OK button: ";
       bottomText = "P " + toTrueFalseString(okButton.pressed) + ", L " + toTrueFalseString(okButton.longPress);
       break;
-    case 7:
+    case 8:
       if (changeOption) topText = "Spray button: ";
       bottomText = "P " + toTrueFalseString(sprayButton.pressed) + ", L " + toTrueFalseString(sprayButton.longPress);
       break;
-    case 8:
+    case 9:
       if (changeOption) topText = "Door magnet: ";
       bottomText = "P " + toTrueFalseString(magneticSensor.pressed) + ", L " + toTrueFalseString(magneticSensor.longPress);
       break;
