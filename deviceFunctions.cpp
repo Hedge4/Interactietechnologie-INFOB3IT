@@ -204,7 +204,9 @@ bool deviceIsIdle() {
   return (deviceState == 0);
 }
 
-// loops from 0-9 for now
+// returns the current temperature
+// TODO make this async (update when received, but don't wait)
+// TODO implement cap in temperatureSensor for how often temp can be called
 int temperature() {
   temperatureSensor.requestTemperatures(); // Send the command to get temperatures
   float tempC = temperatureSensor.getTempCByIndex(0);

@@ -15,7 +15,8 @@
 
 // connected hardware
 extern LiquidCrystal lcd;
-extern const int lcdBacklightPin, ldrPin, ledsPin, sprayPin, motionSensorPin;
+extern const int buttonsPin, lcdBacklightPin, ldrPin, sprayPin, ledsPin, motionSensorPin;
+extern Knop menuButton, okButton, sprayButton, magneticSensor;
 extern DallasTemperature temperatureSensor;
 
 extern const int defaultSprays;

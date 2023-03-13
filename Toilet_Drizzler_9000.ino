@@ -43,7 +43,7 @@ void setup() {
   pinMode(buttonsPin, INPUT);
   pinMode(motionSensorPin, INPUT);
   pinMode(ldrPin, INPUT);
-  pinMode(ledsPin, INPUT);  // setting leds pin as an input on startup turns both leds off
+  pinMode(ledsPin, INPUT); // setting leds pin as an input on startup turns both leds off
   pinMode(sprayPin, OUTPUT);
   //no configuring needed for distance sensor (no downsides encountered whilst testing)
 
@@ -64,15 +64,15 @@ void setup() {
   int spraysLeft = defaultTotalSprays;
   int spraysShort = 1;
   int spraysLong = 2;
-  int spraysShortDelay = 2;   // 2 corresponds to a 10s delay
-  int spraysLongDelay = 2;
+  int spraysShortDelay = 0; // 0 corresponds to a 15s delay (minimum, built into freshener)
+  int spraysLongDelay = 1; // 1 corresponds to a 30s delay
 
   // TODO check if data is valid (not 255), or set to default
   spraysLeft = ( false ) ? defaultTotalSprays : spraysLeft;
   spraysShort = ( false ) ? 1 : spraysShort;
   spraysLong = ( false ) ? 2 : spraysLong;
-  spraysShortDelay = ( false ) ? 2 : spraysShortDelay;  // 2 corresponds to a 10s delay
-  spraysLongDelay = ( false ) ? 2 : spraysLongDelay;
+  spraysShortDelay = ( false ) ? 0 : spraysShortDelay; // 0 corresponds to a 15s delay (minimum, built into freshener)
+  spraysLongDelay = ( false ) ? 1 : spraysLongDelay; // 1 corresponds to a 30s delay
 
   // save eeAddress and value for how many sprays the device has left
   spraysLeftSetup(spraysLeftAddress, spraysLeft);

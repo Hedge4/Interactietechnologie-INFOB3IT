@@ -26,17 +26,20 @@ unsigned long displayRefreshSlowTime;   // when slowly changing display state in
 const int displayRefreshFast = 500;     // refresh delay for quickly changing info
 const int displayRefreshSlow = 10000;   // refresh delay for slowly changing info
 
+// TODO change back to 30 instead of 3000l for debugging
+const long configDelay = 3000l * 1000;    // 30 seconds, then device automatically leaves menu, config, or display state
+int currentDebugOption;                   // stores which debug option we're viewing - options are hardcoded since they need to access methods
+
 /* Possible settings:
-   0 --> 'short': How many sprays for a short toilet visit
-   1 --> 'long': How many sprays for a long toilet visit
+   0 --> How many sprays for a short toilet visit
+   1 --> How many sprays for a long toilet visit
+   2 --> How long the device should wait before spraying after a short toilet visit
+   3 --> How long the device should wait before spraying after a long toilet visit
+   4 --> Resets how many sprays are in the device to defaultTotalSprays
 */
-
-// TODO change this back to 30 seconds and back to int
-const long configDelay = 3000l * 1000;                      // 30 seconds, then leaves menu or config state
-
-int currentSetting, currentValue;                           // index of selected setting and index of selected value
-const int sprayConfigOptions[6] = { 0, 1, 2, 3, 4, 5 };     // value options for spray amount settings
-const int delayConfigOptions[6] = { 0, 5, 10, 20, 40, 60 }; // value options for delay before spray settings
+int currentSetting, currentValue;                               // index of selected setting and index of selected value
+const int sprayConfigOptions[6] = { 0, 1, 2, 3, 4, 5 };         // value options for spray amount settings
+const int delayConfigOptions[6] = { 15, 30, 45, 60, 90, 120 };  // value options for delay before spray settings
 const String configDesc[5] = { "Sprays after short visit", "Sprays after long visit", "Delay after short visit", "Delay after long visit", "Reset sprays remaining" };
 const int defaultTotalSprays = 2400;
 
@@ -107,7 +110,7 @@ void powerBacklight(bool power) {
 // bottom text has no scrolling, and this function is called when it changes
 void updateBottomText() {
   lcd.setCursor(0, 1);
-  lcd.print(bottomText);
+  lcd.print(bottomText + "                ");
 }
 
 // prints text at one position based on scrollIndex
@@ -207,11 +210,78 @@ void changeMenuState(int newState) {
         openConfig();
         return;
       case 4:
-        topText = "Placeholder";
-        bottomText = "More text, aye!";
+        topText = "** DEBUG-INFO **";
+        bottomText = "L>next - R>close";
+        currentDebugOption = 0;
         setText();
         return;
     }
+  }
+}
+
+String toTrueFalseString(bool var) {
+  return var ? "True" : "False";
+}
+
+void changeDebugView(bool changeOption = true) {
+  // changeOption decides whether the selected option changed. If false, we only want to update bottomText
+  if (changeOption) {
+    currentDebugOption++;
+    if (currentDebugOption > 8) currentDebugOption = 0;
+  }
+
+  Serial.println(currentDebugOption);
+
+  // for each case, topText is only changed if the selected option changed
+  switch (currentDebugOption) {
+    case 1:
+      if (changeOption) topText = "Buttons pin: ";
+      bottomText = String(analogRead(buttonsPin));
+      break;
+    case 2:
+      if (changeOption) topText = "Motion: ";
+      bottomText = toTrueFalseString(digitalRead(motionSensorPin));
+      break;
+    case 3:
+      if (changeOption) topText = "Temperature: ";
+      bottomText = String(temperature());
+      break;
+    case 4:
+      if (changeOption) topText = "Distance: ";
+      bottomText = "NOT YET SET"; // TODO
+      break;
+    // our buttons show P (pressed) and L (pressed long)
+    case 5:
+      if (changeOption) topText = "Menu button: ";
+      bottomText = "P " + toTrueFalseString(menuButton.pressed) + ", L " + toTrueFalseString(menuButton.longPress);
+      break;
+    case 6:
+      if (changeOption) topText = "OK button: ";
+      bottomText = "P " + toTrueFalseString(okButton.pressed) + ", L " + toTrueFalseString(okButton.longPress);
+      break;
+    case 7:
+      if (changeOption) topText = "Spray button: ";
+      bottomText = "P " + toTrueFalseString(sprayButton.pressed) + ", L " + toTrueFalseString(sprayButton.longPress);
+      break;
+    case 8:
+      if (changeOption) topText = "Door magnet: ";
+      bottomText = "P " + toTrueFalseString(magneticSensor.pressed) + ", L " + toTrueFalseString(magneticSensor.longPress);
+      break;
+    // default and option 0 are the descriptions for debug-info
+    case 0:
+    default:
+      // these descriptions are static and only need to be updated if changeOption is true
+      if (!changeOption) return;
+      topText = "** DEBUG-INFO **";
+      bottomText = "L>next - R>close";
+      break;
+  }
+
+  // if selected didn't change, we only update the bottomText
+  if (changeOption) {
+    setText();
+  } else {
+    updateBottomText();
   }
 }
 
@@ -358,7 +428,7 @@ void menuButtonUpdate(bool pressed, bool longPressed) {
         chooseConfig();
         return;
       case 4:
-        changeMenuState(1);
+        changeDebugView();
         return;
     }
   }
@@ -445,6 +515,14 @@ void menuLoop(unsigned long curTime) {
     if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
       changeMenuState(1);
       return;
+    }
+  }
+
+  if (menuState == 4) {
+    // in debug state, regularly update the displayed information
+    if (compareTimestamps(curTime, displayRefreshFastTime, displayRefreshFast)) {
+      displayRefreshFastTime = curTime;
+      changeDebugView(false);
     }
   }
 }
