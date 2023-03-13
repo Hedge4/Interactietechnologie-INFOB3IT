@@ -44,7 +44,7 @@ int toiletUseCase = 0;                      //0:deciding, 2:short, 3:long, speci
 int doorMovements = 0;
 bool personHasGoneToToilet = false;
 bool doorClosedDuringVisit = false;
-int motionsForCleaningThreshold = 6;
+int motionsForCleaningThreshold = 12;
 
 /////////////////////////
 //      FUNCTIONS      //
@@ -303,7 +303,7 @@ void deviceLoop(unsigned long curTime) {
         Serial.println("Duration of visit");
         Serial.println(toiletTime);
         Serial.println("Type of visit");
-        Serial.println(toiletUseCase);
+        Serial.println(deviceState);
         Serial.println("Motions sensed");
         Serial.println(motionSensor.motionsSensed);
       }
