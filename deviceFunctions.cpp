@@ -18,8 +18,9 @@ unsigned long deviceTimestamp = 0;
 //timing related vars
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
-unsigned long deviceActiveTime = 10000;  //device will stay on for 60 seconds upon sensing something.
+unsigned long deviceActiveTime = 60000;  //device will stay on for 60 seconds upon sensing something.
 unsigned long  deviceActiveTimestamp = 0;
+unsigned long deviceForceDecision = 40000;   //device will force 
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -226,6 +227,9 @@ String deviceStateString() {
 
 
 void deviceLoop(unsigned long curTime) {
+  if(curTime % 2000 == 0){
+    Serial.println(deviceState); 
+  }
   // update sensors
   motionSensor.update(curTime);
   distSensor.update(curTime);
@@ -296,12 +300,13 @@ void deviceLoop(unsigned long curTime) {
 
       //decision logic
       if(   doorIsClosed && !lightIsOn 
-        || (compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime))){
+        || (compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime))
+        || (compareTimestamps(curTime, deviceTimestamp, deviceForceDecision))){
         
         //check for inactivityTimer
         //assume noone is here when light is off AND door is closed or no activity is sensed   
         //this means we can get baseline of distsensor :)
-        distSensor.noOneHereThreshold = distSensor.lastReading;
+        distSensor.noOneHereThreshold = distSensor.lastReading - 20;
         //here info needs to be gathered for making decision (as this happens at end of visit)    
         if(toiletUseCase != 0){
           changeDeviceState(toiletUseCase);
