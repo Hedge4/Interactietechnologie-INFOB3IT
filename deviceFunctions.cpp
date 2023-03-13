@@ -18,9 +18,10 @@ unsigned long deviceTimestamp = 0;
 //timing related vars
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
-unsigned long deviceActiveTime = 60000;  //device will stay on for 60 seconds upon sensing something.
+unsigned long deviceActiveTime = 10000;  //device will stay on for x seconds upon sensing something.
 unsigned long  deviceActiveTimestamp = 0;
-unsigned long deviceForceDecision = 40000;   //device will force 
+unsigned long forcedDecisionInterval = 10000;   //device will force 
+unsigned long deviceCleaningInterval = 600000;  //estimate time of 10 minutes for cleaning the toilet
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -60,6 +61,7 @@ void changeDeviceState(int newState) {
         motionSensor.resetSensor();   
         personIsOnToilet = false;
         toiletUseCase = 0;
+        doorMovements = 0;
         break;
       case 1:    
         break;
@@ -70,7 +72,6 @@ void changeDeviceState(int newState) {
         startSpray(2);
         break;
       case 4:
-        deviceActiveTimestamp = deviceTimestamp; //last reset on this before it just counts down
         break;
     }
   }
@@ -225,10 +226,12 @@ String deviceStateString() {
 //          LOOP          //
 ////////////////////////////
 
+bool lightIsOn = false;
+bool doorIsClosed = false;
 
 void deviceLoop(unsigned long curTime) {
-  if(curTime % 2000 == 0){
-    Serial.println(deviceState); 
+  if(curTime % 1000 == 0){
+    //Serial.println(deviceActiveTimestamp);
   }
   // update sensors
   motionSensor.update(curTime);
@@ -275,8 +278,8 @@ void deviceLoop(unsigned long curTime) {
     case 0:
       break;
     case 1:
-      bool doorIsClosed = magneticSensor.pressed;
-      bool lightIsOn = (lightSensor.lastReading > 300);  //LOWLIGHTLEVELTHRESHOLD HERE
+      doorIsClosed = magneticSensor.longPress;
+      lightIsOn = (lightSensor.lastReading > lightSensor.lowLightThreshold); 
       
       //tick the person goes sitting on toilet, sensed with distancesensor
       if(distSensor.changed && distSensor.triggered && !personIsOnToilet){  
@@ -300,9 +303,8 @@ void deviceLoop(unsigned long curTime) {
 
       //decision logic
       if(   doorIsClosed && !lightIsOn 
-        || (compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime))
-        || (compareTimestamps(curTime, deviceTimestamp, deviceForceDecision))){
-        
+        || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))){
+         
         //check for inactivityTimer
         //assume noone is here when light is off AND door is closed or no activity is sensed   
         //this means we can get baseline of distsensor :)
@@ -318,6 +320,8 @@ void deviceLoop(unsigned long curTime) {
           }
           else{
             //False positive case
+            Serial.println("FP");
+            
             changeDeviceState(0);
           }
         }
@@ -338,9 +342,11 @@ void deviceLoop(unsigned long curTime) {
         changeDeviceState(0);
       break;
     case 4:
-      if(compareTimestamps(curTime, deviceActiveTimestamp, deviceActiveTime)){
+      //just wait untill light is turned off or enough time has elapsed, then change state back to idle
+      lightIsOn = (lightSensor.lastReading > lightSensor.lowLightThreshold);  
+      if(!lightIsOn || compareTimestamps(curTime, deviceTimestamp, deviceCleaningInterval)){
         changeDeviceState(0);        
-      }
+      }                
       break;      
   }
   

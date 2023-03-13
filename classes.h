@@ -49,6 +49,7 @@ public:
 class LightSensor : public Sensor {
 public:
   int readSensitivity = 100;   //only update lastReading when reading differs by at least readSensitivity
+  int lowLightThreshold = 100;
   LightSensor(int interval);
   void update(unsigned long curTime);
 };
