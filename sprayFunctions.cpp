@@ -32,8 +32,8 @@ void sprayLoop(unsigned long curTime) {
       // if there's another spray coming, we indicate that with a yellow led
       if (plannedSpraysLeft > 0) yellowLed = 1;
       // if there's less than 5% of sprays left in the device, we show a constantly burning yellow led
-      else if (spraysLeft / defaultTotalSprays < 0.05) yellowLed = 1;
-      // and if neither, turn the lef off
+      else if ((spraysLeft * 100l) / defaultTotalSprays < 5) yellowLed = 1;
+      // and if neither, turn the led off
       else yellowLed = 0;
     }
   } else if (waiting) {
