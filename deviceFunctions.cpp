@@ -20,7 +20,7 @@ unsigned long deviceTimestamp = 0;
 //unsigned long deviceStartsDetectingTimestamp = 0;
 //int deviceEvaluationInterval = 3;
 unsigned long deviceActiveTime = 120000;  //device will stay on for x seconds upon sensing something.
-unsigned long deviceCleaningInterval = 180000;  //estimate time of 10 minutes for cleaning the toilet
+unsigned long deviceCleaningInterval = 90000;  //estimate time of 10 minutes for cleaning the toilet
 unsigned long deviceCooldown = 5000;   
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
