@@ -1,18 +1,23 @@
 #include "deviceFunctions.h"
 
+
 /////////////////////////
 //    CONFIGURATION    //
 /////////////////////////
 
 /* Possible states:
-  0 --> 'wait': Bathroom isn't being used, default mode
-  1 --> 'detection': Detecting use case
-  2 --> 'number_1': ...
-  3 --> 'number_2': ...
-  4 --> 'cleaning': ...
+  0 --> 'idle': Bathroom isn't being used, default mode
+  1 --> 'detect': Detecting use case
+  2 --> 'num_1': ...
+  3 --> 'num_2': ...
+  4 --> 'clean': ...
 */
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
+
+// timing related vars
+unsigned long deviceActiveTime = 120000;          // device will stay on for x seconds upon sensing something.
+unsigned long deviceCleaningInterval = 90000;     // estimate time of 10 minutes for cleaning the toilet
 
 int spraysShort, spraysLong;                      // how many sprays after long/short visit
 unsigned long spraysShortDelay, spraysLongDelay;  // how many milliseconds delay between end of toilet use and spray
@@ -25,17 +30,15 @@ bool yellowLedOn = false, greenLedOn = false;     // actual calculated outputs f
 bool lastLedsPinmode = true, lastLedOutput = LOW;
 unsigned long ledsTimestamp = 0, ledsDelay = 40; // when leds logic was last checked and how long the delay in between checks should be
 
-//aanpak wordt om zodra de deur open gaat (en het licht aan)
-//een timer wordt gestart die 90 seconden aftelt.
-//binnen 90 seconden worden verschillende kenmerken bewaard in bools:
-//doorStaysOpen?
-//LightStaysOn?
-//MotionNearToilet? -> PersonNearbyToilet?/PersonFarAwayOfToilet?
-
-//differentiate between going to the toilet with open door
-//and cleaning the toilet by checking motion and distance
-
-
+// vars for detecting
+unsigned long personOnToiletTimestamp = 0;  // linked to distance sensor, stars up when person is sitting on toilet
+unsigned long toiletTime = 0;               // save length of sitting-on-toilet visit
+int personOnToiletShortThreshold = 10000;   // threshold for short visit
+long personOnToiletLongThreshold = 100000;  // threhsold for long visit
+bool personIsOnToilet = false;
+bool personHasGoneToToilet = false;
+bool doorClosedDuringVisit = false;
+int motionsForCleaningThreshold = 12;
 
 /////////////////////////
 //      FUNCTIONS      //
@@ -50,14 +53,28 @@ void changeDeviceState(int newState) {
     // state initialisation logic
     switch (newState) {
       case 0:
+        // reset sensors
+        motionSensor.resetSensor();
+        personIsOnToilet = false;
+        toiletTime = 0;
+        personHasGoneToToilet = false;
+        doorClosedDuringVisit = false;
+        // set heartbeat
+        greenLed = 2;
         break;
       case 1:
+        greenLed = 2;
         break;
       case 2:
+        greenLed = 0;
+        startSpray(1);
         break;
       case 3:
+        greenLed = 0;
+        startSpray(2);
         break;
       case 4:
+        greenLed = 1;
         break;
     }
   }
@@ -65,9 +82,9 @@ void changeDeviceState(int newState) {
 
 void updateLedsOutput(unsigned long curTime) {
   if (compareTimestamps(curTime, ledsTimestamp, ledsDelay)) {
-  // calculate which led should be on right now to get the desired effects out of both leds
-  // yellowLedOn, before it's updated, functions as the led's last state here
-  switch (yellowLed) {
+    // calculate which led should be on right now to get the desired effects out of both leds
+    // yellowLedOn, before it's updated, functions as the led's last state here
+    switch (yellowLed) {
       case 0:
         yellowLedOn = false;
         break;
@@ -144,36 +161,7 @@ void updateLedsOutput(unsigned long curTime) {
   }
 }
 
-//WORK IN PROGRESS
 
-/*
-  //check light sensor
-  int lightLevelCheck() {
-  int lightReading = analogRead(ldrPin);
-  return lightReading;
-  }
-
-  //check magnetic sensor
-  //if door is closed, magnet will output LOW
-  bool doorIsOpen(){
-  int doorState = digitalRead(magneticSensorPin);
-  if(doorState == HIGH) {
-    return true;
-  } else {
-    return false;
-  }
-  }
-
-  //check distance, to be implemented
-  int distanceCheck(){
-  return 0;
-  }
-
-
-  void makeDetection(){
-  return;
-  }
-*/
 
 //////////////////////////
 //  EXTERNAL FUNCTIONS  //
@@ -205,19 +193,8 @@ bool deviceIsIdle() {
 }
 
 // returns the current temperature
-// TODO make this async (update when received, but don't wait)
-// TODO implement cap in temperatureSensor for how often temp can be called
 int temperature() {
-  temperatureSensor.requestTemperatures(); // Send the command to get temperatures
-  float tempC = temperatureSensor.getTempCByIndex(0);
-  // Check if reading was successful
-  if (tempC != DEVICE_DISCONNECTED_C)
-  {
-    return (int)tempC;
-  }
-  else {
-    return 0;
-  }
+  return temperatureSensor.lastReading;
 }
 
 String deviceStateString() {
@@ -225,11 +202,11 @@ String deviceStateString() {
     case 0:
       return "Idle";
     case 1:
-      return "Detection";
+      return "Detect";
     case 2:
-      return "Num1";
+      return "Num_1";
     case 3:
-      return "Num2";
+      return "Num_2";
     case 4:
       return "Cleaning";
     default:
@@ -242,38 +219,89 @@ String deviceStateString() {
 //          LOOP          //
 ////////////////////////////
 
+// bool doorIsClosed = false;
+//      doorIsClosed = magneticSensor.longPress;
+// TODO: make magnet forced interrupt, will help decision logic
+
+
 void deviceLoop(unsigned long curTime) {
   // update sensors
+  motionSensor.update(curTime);
+  distSensor.update(curTime);
+  temperatureSensor.update(curTime);
+  lightSensor.update(curTime);
+  // magneticSensor already gets updated in other loop
 
-  // run detection / other states' logic
+  if (deviceState == 0 && motionSensor.triggered && lightSensor.isLightOn()) {
+    changeDeviceState(1);
+    return;
+  }
 
+  switch (deviceState) {
+    case 0:
+      break;
+    case 1:
+      // tick the person goes sitting on toilet, sensed with distancesensor
+      if (!personIsOnToilet && distSensor.triggered) {
+        personHasGoneToToilet = false;
+        personOnToiletTimestamp = curTime;
+        personIsOnToilet = true;
+        doorClosedDuringVisit = magneticSensor.pressed;
+      }
+
+      // tick the person moves away from toilet, sensed with distancesensor
+      if (personIsOnToilet && !distSensor.triggered) {
+        personHasGoneToToilet = true;
+        int ttReading = curTime - personOnToiletTimestamp;
+        if (ttReading > toiletTime) {
+          toiletTime = ttReading;  // keep track of largest toilettime
+          personIsOnToilet = false;
+        }
+
+      }
+
+      // decision logic
+      // make decision when toilet is not in use -> light is off
+      // or time has elapsed
+      // only make decision onces motionSensor has cooled off
+      if ((!(lightSensor.isLightOn() || motionSensor.triggered)  && !motionSensor.triggered && personHasGoneToToilet)
+          || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))) {
+
+        // check amount of motion. if A lot happened, cleaning has happend or just a long visit
+        if (motionSensor.motionsSensed >= motionsForCleaningThreshold && !doorClosedDuringVisit) {
+          changeDeviceState(4);
+        }
+        // decide if this was a long or short visit
+        else if (toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold) {
+          changeDeviceState(2);
+        }
+        else if (toiletTime > personOnToiletLongThreshold) {
+          changeDeviceState(3);
+        }
+        Serial.println("Duration of visit");
+        Serial.println(toiletTime);
+        Serial.println("Type of visit");
+        Serial.println(deviceState);
+        Serial.println("Motions sensed");
+        Serial.println(motionSensor.motionsSensed);
+      }
+      break;
+    case 2:
+      if (!sprayComing())
+        changeDeviceState(0);
+      break;
+    case 3:
+      if (!sprayComing())
+        changeDeviceState(0);
+      break;
+    case 4:
+      // just wait untill enough time has elapsed, then change state back to idle
+      if (compareTimestamps(curTime, deviceTimestamp, deviceCleaningInterval)) {
+        changeDeviceState(0);
+      }
+      break;
+  }
+
+  // update what our leds display
   updateLedsOutput(curTime);
 }
-
-//WORK IN PROGRESS
-/*
-  //when bathroom is not in use, the system will stay idle untill the door is opened
-  void deviceIdleLoop(unsigned long curTime){
-  if(doorIsOpen()){
-    changeDeviceState(1);
-  }
-  //TODO: IMPLEMENT HEARTBEAT, IMPLEMENT LDR
-  }
-
-
-
-  int detectionInterval = 180000;  //3 minutes currently
-  bool doorClosed = true;
-
-
-  void deviceDetectionLoop(unsigned long curTime){
-
-  //check if detectionInterval passed, if yes make choice
-  if(compareTimestamps(curTime, deviceTimestamp, detectionInterval)){
-    makeDetection();
-  };
-
-  //check if door is back closed again
-
-  }
-*/

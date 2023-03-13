@@ -26,9 +26,8 @@ unsigned long displayRefreshSlowTime;   // when slowly changing display state in
 const int displayRefreshFast = 500;     // refresh delay for quickly changing info
 const int displayRefreshSlow = 10000;   // refresh delay for slowly changing info
 
-// TODO change back to 30 instead of 3000l for debugging
-const long configDelay = 3000l * 1000;    // 30 seconds, then device automatically leaves menu, config, or display state
-int currentDebugOption;                   // stores which debug option we're viewing - options are hardcoded since they need to access methods
+const int configDelay = 30 * 1000;      // 30 seconds, then device automatically leaves menu, config, or display state
+int currentDebugOption;                 // stores which debug option we're viewing - options are hardcoded since they need to access methods
 
 /* Possible settings:
    0 --> How many sprays for a short toilet visit

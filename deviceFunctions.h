@@ -2,8 +2,9 @@
 #define DEVICEFUNCTIONS_H
 
 #include <Arduino.h>
+#include "classes.h"
+#include "sprayFunctions.h"
 #include "Toilet_Drizzler_9000.h"
-
 
 // methods
 void deviceLoop(unsigned long curTime);
