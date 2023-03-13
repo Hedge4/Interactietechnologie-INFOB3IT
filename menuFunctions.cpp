@@ -26,8 +26,10 @@ unsigned long displayRefreshSlowTime;   // when slowly changing display state in
 const int displayRefreshFast = 500;     // refresh delay for quickly changing info
 const int displayRefreshSlow = 10000;   // refresh delay for slowly changing info
 
-const int configDelay = 30 * 1000;      // 30 seconds, then device automatically leaves menu, config, or display state
-int currentDebugOption;                 // stores which debug option we're viewing - options are hardcoded since they need to access methods
+const int displayOffDelay = 30 * 1000;    // 30 inactive seconds, then the screen turns off automatically
+const int leaveConfigDelay = 5 * 1000;    // 5 inactive seconds, then leave menu or config state
+const long leaveDebugDelay = 120l * 1000; // 120 inactive seconds, then automatically leave devmode state
+int currentDebugOption;                   // stores which debug option to show - cases are hardcoded since they access methods
 
 /* Possible settings:
    0 --> How many sprays for a short toilet visit
@@ -411,7 +413,11 @@ void confirmConfig() {
 
 // what happens if the menu button is pressed, based on state
 void menuButtonUpdate(bool pressed, bool longPressed) {
-  if (!pressed) { // triggers on release
+  // store now as most recent activity
+  menuTimestamp = millis();
+
+  // triggers on release
+  if (!pressed) {
     if (longPressed) {
       changeMenuState(4);
       return;
@@ -439,6 +445,10 @@ void menuButtonUpdate(bool pressed, bool longPressed) {
 
 // what happens if the ok button is pressed, based on state
 void okButtonUpdate(bool pressed) {
+  // store now as most recent activity
+  menuTimestamp = millis();
+
+  // triggers on release
   if (!pressed) {
     switch (menuState) {
       case 0:
@@ -468,9 +478,9 @@ void activateScreen() {
   }
 }
 
-// whether the system is in the menu or config state
+// whether the menu is being used (0 = idle, 1 = display, rest = active)
 bool menuActive() {
-  return (menuState == 2 || menuState == 3);
+  return menuState >= 2;
 }
 
 
@@ -485,7 +495,7 @@ void menuLoop(unsigned long curTime) {
 
   if (menuState == 1) {
     // turn display off if bathroom is unused AND display is inactive for too long
-    if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
+    if (compareTimestamps(curTime, menuTimestamp, displayOffDelay)) {
       if (deviceIsIdle()) {
         changeMenuState(0);
         return;
@@ -515,7 +525,7 @@ void menuLoop(unsigned long curTime) {
 
   // from settings or config state, go back to display state if inactive for too long
   if (menuState == 2 || menuState == 3) {
-    if (compareTimestamps(curTime, menuTimestamp, configDelay)) {
+    if (compareTimestamps(curTime, menuTimestamp, leaveConfigDelay)) {
       changeMenuState(1);
       return;
     }
@@ -526,6 +536,12 @@ void menuLoop(unsigned long curTime) {
     if (compareTimestamps(curTime, displayRefreshFastTime, displayRefreshFast)) {
       displayRefreshFastTime = curTime;
       changeDebugView(false);
+    }
+
+    // if inactive for longer than leaveDebugDelay, go back to the display state
+    if (compareTimestamps(curTime, menuTimestamp, leaveDebugDelay)) {
+      changeMenuState(1);
+      return;
     }
   }
 }

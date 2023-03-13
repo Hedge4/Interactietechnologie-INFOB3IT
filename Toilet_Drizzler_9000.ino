@@ -36,7 +36,7 @@ Knop magneticSensor(758, 778); // value of 1023 * 3/4 = ~768
 
 // initialise the other sensors, intervals chosen arbitrarely
 DistanceSensor distSensor(250);
-LightSensor lightSensor(1000);
+LightSensor lightSensor(250);
 MotionSensor motionSensor(100);
 TemperatureSensor temperatureSensor(2000);
 
