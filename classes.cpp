@@ -68,6 +68,12 @@ void DistanceSensor::update(unsigned long curTime) {
     return;
   }
   lastSensed = curTime;
+
+  //turn off trigger if too long has passed  
+  if(lastReading > noOneHereThreshold){
+    if(compareTimestamps(curTime,lastTriggered,unTriggerInterval))
+      triggered = false;
+  }
     
   int reading = sonar.ping_cm();
 
@@ -84,10 +90,6 @@ void DistanceSensor::update(unsigned long curTime) {
     changed = false;
   }
 
-  if(lastReading > noOneHereThreshold){
-    if(compareTimestamps(curTime,lastTriggered,unTriggerInterval))
-      triggered = false;
-  }
 
   //if 60 seconds of time has elapsed, do a measurement
   //so we can get standards
@@ -144,10 +146,7 @@ MotionSensor::MotionSensor(int interval){
 
 void MotionSensor::update(unsigned long curTime){
   //check if sensor can do its sensing
-  if(!active){
-    return;
-  }
-  if (!compareTimestamps(curTime, lastSensed, senseInterval)) {   
+  if (!(active && compareTimestamps(curTime, lastSensed, senseInterval))) {   
     return;
   }
   lastSensed = curTime;

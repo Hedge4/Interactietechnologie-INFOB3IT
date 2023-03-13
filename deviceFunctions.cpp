@@ -11,6 +11,7 @@
   2 --> 'number_1': ...
   3 --> 'number_2': ...
   4 --> 'cleaning': ...
+  5 --> 'detectionmade'
 */
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
@@ -238,26 +239,13 @@ void deviceLoop(unsigned long curTime) {
   distSensor.update(curTime);
   temperatureSensor.update(curTime);
   lightSensor.update(curTime);
-  //magneticSensor wordt al geupdate in alwaysUpdate loop
-
-/*
-//TESTING
-  if(!motionSensor.triggered){
-    Serial.println("NOTRIGGER");
-    Serial.println(motionSensor.motionsSensed);
-  }
-*/
+  //magneticSensor already gets updated in other loop
 
   //check if sensors sensed change  
-  if(   motionSensor.changed 
-    ||  magneticSensor.changed
-    ||  distSensor.changed
-    ||  lightSensor.changed){      
-    //check if room is 'in use' -> motion has been detected. If yes, go to detection mode
-    if(deviceState == 0 && motionSensor.triggered){
+  
+  if(deviceState == 0 && motionSensor.triggered && lightSensor.isLightOn()){
       changeDeviceState(1);
       return;
-    }
   }
 
   switch (deviceState){
