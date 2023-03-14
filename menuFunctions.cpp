@@ -528,7 +528,7 @@ void menuLoop(unsigned long curTime) {
   scrollTextLoop(curTime);
 
   if (menuState == 1) {
-    // turn display off if bathroom is unused AND display is inactive for too long
+    // turn display off if device AND menu are both inactive for at least displayOffDelay ms
     if (compareTimestamps(curTime, menuTimestamp, displayOffDelay)) {
       if (deviceIsIdle(curTime, displayOffDelay)) {
         changeMenuState(0);

@@ -49,8 +49,8 @@ int motionsForCleaningThreshold = 12;
 // setup for when we enter a specific state
 void changeDeviceState(int newState) {
   if (deviceState != newState) {
-    deviceState = newState;
     deviceTimestamp = millis();
+    deviceState = newState;
 
     Serial.print(F("Switched to deviceState "));
     Serial.println(newState);
@@ -236,7 +236,7 @@ void setSpraysLongDelay(unsigned long newValue) {
 
 // used to determine if the screen can be turned off
 bool deviceIsIdle(unsigned long curTime, int delay) {
-  return (deviceState == 0 && compareTimestamps(curTime, deviceTimestamp, delay));
+  return ((deviceState == 0) && compareTimestamps(curTime, deviceTimestamp, delay));
 }
 
 String deviceStateString() {
@@ -269,12 +269,6 @@ void deviceLoop(unsigned long curTime) {
   lightSensor.update(curTime);
   // magneticSensor already gets updated in other loop
 
-  if (deviceState == 0 && motionSensor.triggered && (lightSensor.isLightOn() || !magneticSensor.pressed)) {
-    // start detection mode if we detect motion AND (the light is on OR the door is opened) --> someone entered
-    changeDeviceState(1);
-    return;
-  }
-
   switch (deviceState) {
     case 0:
       // start detection mode if we 'detect motion AND (the light is on OR the door is open)' --> someone entered
@@ -284,6 +278,16 @@ void deviceLoop(unsigned long curTime) {
       }
       break;
     case 1:
+      // if menu is being used, interrupt detection, delay sprays
+      if (menuActive()) {
+        motionSensor.resetSensor();
+        personIsOnToilet = false;
+        toiletTime = 0;
+        personHasGoneToToilet = false;
+        doorClosedDuringVisit = false;
+        doorOpenedAfterVisit = false;
+      }
+
       // tick the person goes sitting on toilet, sensed with distancesensor
       if (!personIsOnToilet && distSensor.triggered) {
         personOnToiletTimestamp = curTime;

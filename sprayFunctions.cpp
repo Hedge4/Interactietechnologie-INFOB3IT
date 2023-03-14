@@ -22,6 +22,20 @@ unsigned long sprayTimestamp = 0;
 ////////////////////////////
 
 void sprayLoop(unsigned long curTime) {
+  // if menu is active, interrupt sprays and save them for later
+  if (menuActive()) {
+    if (spraying) {
+      plannedSpraysLeft++;
+      spraying = false;
+      waiting = true;
+      digitalWrite(sprayPin, LOW);
+      sprayTimestamp = millis();
+      yellowLed = 0;
+    }
+    // only execute the code if menu isn't active
+    return;
+  }
+
   if (spraying) {
     // stop spraying if we've reached sprayDuration
     if (compareTimestamps(curTime, sprayTimestamp, sprayDuration)) {
