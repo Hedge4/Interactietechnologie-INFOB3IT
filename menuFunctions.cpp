@@ -298,7 +298,7 @@ void openSettings() {
   currentSetting = 0;
   currentValue = spraysShortSetting;
   topText = configDesc[currentSetting];
-  bottomText = "Huidig: " + String(currentValue);
+  bottomText = "Current: " + String(currentValue);
   setText();
 }
 
@@ -310,22 +310,22 @@ void chooseSetting() {
   switch (currentSetting) {
     case 0:
       currentValue = spraysShortSetting;
-      bottomText = "Huidig: " + String(sprayConfigOptions[currentValue]);
+      bottomText = "Current: " + String(sprayConfigOptions[currentValue]);
       break;
     case 1:
       currentValue = spraysLongSetting;
-      bottomText = "Huidig: " + String(sprayConfigOptions[currentValue]);
+      bottomText = "Current: " + String(sprayConfigOptions[currentValue]);
       break;
     case 2:
       currentValue = spraysShortDelaySetting;
-      bottomText = "Huidig: " + String(delayConfigOptions[currentValue]);
+      bottomText = "Current: " + String(delayConfigOptions[currentValue]);
       break;
     case 3:
       currentValue = spraysLongDelaySetting;
-      bottomText = "Huidig: " + String(delayConfigOptions[currentValue]);
+      bottomText = "Current: " + String(delayConfigOptions[currentValue]);
       break;
     case 4:
-      bottomText = String(spraysLeft) + " resterend";
+      bottomText = String(spraysLeft) + " remaining";
       break;
   }
 
@@ -338,11 +338,11 @@ void openConfig() {
   switch (currentSetting) {
     case 0:
     case 1:
-      bottomText = "Nieuw: " + String(sprayConfigOptions[currentValue]);
+      bottomText = "New: " + String(sprayConfigOptions[currentValue]);
       break;
     case 2:
     case 3:
-      bottomText = "Nieuw: " + String(delayConfigOptions[currentValue]);
+      bottomText = "New: " + String(delayConfigOptions[currentValue]);
       break;
     case 4:
       topText = "Are you sure?";
@@ -359,12 +359,12 @@ void chooseConfig() {
     case 0:
     case 1:
       if (++currentValue >= (sizeof(sprayConfigOptions) / sizeof(sprayConfigOptions[0]))) currentValue = 0; // compare to array size
-      bottomText = "Nieuw: " + String(sprayConfigOptions[currentValue]);
+      bottomText = "New: " + String(sprayConfigOptions[currentValue]);
       break;
     case 2:
     case 3:
       if (++currentValue >= (sizeof(delayConfigOptions) / sizeof(delayConfigOptions[0]))) currentValue = 0; // compare to array size
-      bottomText = "Nieuw: " + String(delayConfigOptions[currentValue]);
+      bottomText = "New: " + String(delayConfigOptions[currentValue]);
       break;
     case 4:
       // on reset confirm screen, go back to display state if menu button is pressed instead of ok
@@ -501,7 +501,7 @@ void activateScreen() {
       menuState = 1; // startup is part of the display state but the text is only set here
       powerBacklight(true);
       // startup initialisation text
-      topText = "~ De Ultieme Toiletervaring!";
+      topText = "~ The Ultimate Toilet Experience!";
       bottomText = "Toilet Drizzler";
       lcd.clear();
       setText();
