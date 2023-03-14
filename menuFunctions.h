@@ -5,7 +5,7 @@
 #include <EEPROM.h>
 
 #include "functions.h"
-#include "Toilet_Drizzler_9000.h"
+#include "Toilet_Drizzler.h"
 #include "deviceFunctions.h"
 
 

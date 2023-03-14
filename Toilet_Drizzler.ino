@@ -1,5 +1,5 @@
 // stuff to include:
-#include "Toilet_Drizzler_9000.h"
+#include "Toilet_Drizzler.h"
 
 
 // initialize the library by associating any needed LCD interface pin

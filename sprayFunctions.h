@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "functions.h"
 #include "menuFunctions.h"
-#include "Toilet_Drizzler_9000.h" // to enable/disable the Toilet Drizzler 9000
+#include "Toilet_Drizzler.h" // to enable/disable the Toilet Drizzler 9000
 
 
 void sprayLoop(unsigned long curTime);

@@ -1,5 +1,5 @@
-#ifndef TOILET_DRIZZLER_9000_H
-#define TOILET_DRIZZLER_9000_H
+#ifndef TOILET_DRIZZLER_H
+#define TOILET_DRIZZLER_H
 
 #include <Arduino.h>
 #include <EEPROM.h>
@@ -28,4 +28,4 @@ extern LightSensor lightSensor;
 extern const int defaultSprays;
 
 
-#endif /*TOILET_DRIZZLER_9000_H*/
+#endif /*TOILET_DRIZZLER_H*/
