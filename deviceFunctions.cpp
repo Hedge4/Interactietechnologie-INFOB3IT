@@ -33,13 +33,17 @@ unsigned long ledsTimestamp = 0, ledsDelay = 40;  // when leds logic was last ch
 // vars for detecting
 unsigned long personOnToiletTimestamp = 0;  // linked to distance sensor, stars up when person is sitting on toilet
 unsigned long toiletTime = 0;               // save length of sitting-on-toilet visit
-int personOnToiletShortThreshold = 12000;   // short visit threshold (only longer than accidental cleaning triggers)
-long personOnToiletLongThreshold = 80000;   // long visit threshold (shorter than average, because detection often resets)
+unsigned long lastToiletTimeIncrease = 0;   // stores when toiletTime was last incremented
+int finishAfterLastIncrement = 10000;       // how long after toiletTime's last increase the device assumes user is done
+int toiletUsageDetectionThreshold = 7000;   // short visit threshold (only longer than accidental cleaning triggers)
+int personOnToiletShortThreshold = 20000;   // short visit threshold (only longer than accidental cleaning triggers)
+long personOnToiletLongThreshold = 120000;  // long visit threshold (shorter than average, because detection often resets)
 bool personIsOnToilet = false;
 bool personHasGoneToToilet = false;
 bool doorClosedDuringVisit = false;
 bool doorOpenedAfterVisit = false;
 int motionsForCleaningThreshold = 12;
+bool finishedToilet, bathroomEmpty, detectionExpired;
 
 
 /////////////////////////
@@ -202,7 +206,7 @@ void executeDetectedUseCase(unsigned long curTime) {
         break;
       default:
         // this one shouldn't be able to run
-        Serial.println("Error: Reached default case in executeDetectedUseCase() switch.");
+        Serial.println(F("Error: Reached default case in executeDetectedUseCase() switch."));
         break;
     }
   }
@@ -295,14 +299,13 @@ void deviceLoop(unsigned long curTime) {
       // tick the person moves away from toilet, sensed with distancesensor
       if (personIsOnToilet && !distSensor.triggered) {
         personIsOnToilet = false;
-        int ttReading = curTime - personOnToiletTimestamp;
+        unsigned long ttReading = curTime - personOnToiletTimestamp;
 
-        // if person was on toilet for long enough, store the toiletTime
-        if (ttReading > personOnToiletShortThreshold) {
+        // if person was on toilet for long enough, increment toiletTime and store that user used the toilet
+        if (ttReading > toiletUsageDetectionThreshold) {
           personHasGoneToToilet = true;
-          if (ttReading > toiletTime) {
-            toiletTime = ttReading; // keep track of largest toilettime
-          }
+          toiletTime += ttReading;
+          lastToiletTimeIncrease = curTime;
         }
       }
 
@@ -326,24 +329,28 @@ void deviceLoop(unsigned long curTime) {
       }
 
       // DECISION LOGIC
-      // Make a decision once motionSensor has cooled off and someone was detected near the toilet
-      if ((!motionSensor.triggered && personHasGoneToToilet)
-        // ...or bathroom is empty before detection finished <-- no motion AND (no light OR (door was opened AND now closed))
-        || (!motionSensor.triggered && (!lightSensor.isLightOn() || (doorOpenedAfterVisit && magneticSensor.pressed)))
-        // ...or a decision is forced if device has been detecting for too long (for cleaning or false alarm)
-        || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))) {
+      // Make a decision once distSensor has cooled off and someone was detected near the toilet
+      finishedToilet = !distSensor.triggered && personHasGoneToToilet && (compareTimestamps(curTime, lastToiletTimeIncrease, finishAfterLastIncrement) || toiletTime > personOnToiletLongThreshold);
+      // ...or bathroom is empty before detection finished <-- no motion AND (no light OR (door was opened AND now closed))
+      bathroomEmpty = !motionSensor.triggered && (!lightSensor.isLightOn() || (doorOpenedAfterVisit && magneticSensor.pressed));
+      // ...or a decision is forced if device has been detecting for too long (for cleaning or false alarm)
+      detectionExpired = compareTimestamps(curTime, deviceTimestamp, deviceActiveTime);
+
+      // print which bool became true and led to exiting 'detect' state
+      Serial.print(F("Left detection state due to "));
+      Serial.println(finishedToilet ? "finishedToilet" : bathroomEmpty ? "bathroomEmpty" : detectionExpired ? "detectionExpired" : "UNKOWN REASON");
+
+      if (finishedToilet || bathroomEmpty || detectionExpired) {
 
         // if user was still on the toilet but detection stopped after deviceActiveTime, we still want that reading
         if (personIsOnToilet) {
           personIsOnToilet = false;
-          int ttReading = curTime - personOnToiletTimestamp;
+          unsigned long ttReading = curTime - personOnToiletTimestamp;
 
-          // if person was on toilet for long enough, store the toiletTime and whether user used the toilet
-          if (ttReading > personOnToiletShortThreshold) {
+          // if person was on toilet for long enough, increment toiletTime and store that user used the toilet
+          if (ttReading > toiletUsageDetectionThreshold) {
             personHasGoneToToilet = true;
-            if (ttReading > toiletTime) {
-              toiletTime = ttReading; // keep largest toilettime
-            }
+            toiletTime += ttReading;
           }
         }
 

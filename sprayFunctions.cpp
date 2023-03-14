@@ -43,7 +43,7 @@ void sprayLoop(unsigned long curTime) {
       waiting = true;
       digitalWrite(sprayPin, LOW);
       sprayTimestamp = millis();
-      Serial.println("Spraying stopped, now waiting.");
+      Serial.println(F("Spraying stopped, now waiting."));
 
       // if there's another spray coming, we indicate that with a yellow led
       if (plannedSpraysLeft > 0) yellowLed = 1;
@@ -61,7 +61,7 @@ void sprayLoop(unsigned long curTime) {
         if (spraysLeft > 0) plannedSpraysLeft--;
         startSpray();
       } else {
-        Serial.println("No more sprays, now idle.");
+        Serial.println(F("No more sprays, now idle."));
       }
     }
   } else {
@@ -141,7 +141,7 @@ void cancelSprays() {
     waiting = true;
     digitalWrite(sprayPin, LOW);
     sprayTimestamp = millis();
-    Serial.println("Spraying stopped, now waiting.");
+    Serial.println(F("Spraying stopped, now waiting."));
   }
 }
 

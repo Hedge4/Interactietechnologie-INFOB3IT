@@ -410,7 +410,7 @@ void confirmConfig() {
 }
 
 void leaveStartup() {
-  Serial.println("Closed startup text, menu is now in regular display state");
+  Serial.println(F("Closed startup text, menu is now in regular display state"));
   startup = false;
   topText = displayStateTopText();
   bottomText = displayStateBottomText();
@@ -497,7 +497,7 @@ void activateScreen() {
   // only does something if screen was turned off
   if (menuState == 0) {
     if (startup) {
-      Serial.println("Now showing startup text in menu display state");
+      Serial.println(F("Now showing startup text in menu display state"));
       menuState = 1; // startup is part of the display state but the text is only set here
       powerBacklight(true);
       // startup initialisation text
