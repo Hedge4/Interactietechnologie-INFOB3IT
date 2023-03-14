@@ -27,12 +27,12 @@ DallasTemperature dallasTemperatureSensor(&oneWire);
 
 
 // set up our buttons, value of 1023 means no button is pressed
-Knop menuButton(0, 10);   // value of ~0
-Knop okButton(501, 521);   // value of 1023 * 1/2 = ~511
-Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
+Knop menuButton(0, 10);         // value of ~0
+Knop okButton(501, 521);        // value of 1023 * 1/2 = ~511
+Knop sprayButton(672, 692);     // value of 1023 * 2/3 = ~682
 
 // connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
-Knop magneticSensor(758, 778); // value of 1023 * 3/4 = ~768
+Knop magneticSensor(758, 778);  // value of 1023 * 3/4 = ~768
 
 // initialise the other sensors, intervals chosen somewhat arbitrarily
 DistanceSensor distSensor(50);
@@ -59,25 +59,29 @@ void setup() {
   Serial.begin(9600);
 
   // get relevant memory from EEPROM
-  const int spraysLeftAddress = 0;
-  const int spraysShortAddress = 0;
-  const int spraysLongAddress = 0;
-  const int spraysShortDelayAddress = 0;
-  const int spraysLongDelayAddress = 0;
+  const int spraysLeftAddress = 0;  // sprays left is two bytes so has two addresses
+  const int spraysShortAddress = 2;
+  const int spraysLongAddress = 3;
+  const int spraysShortDelayAddress = 4;
+  const int spraysLongDelayAddress = 5;
 
-  // TODO EEPROM read logic here
-  int spraysLeft = defaultTotalSprays;
-  int spraysShort = 1;
-  int spraysLong = 2;
-  int spraysShortDelay = 0; // 0 corresponds to a 15s delay (minimum, built into freshener)
-  int spraysLongDelay = 1; // 1 corresponds to a 30s delay
+  // EEPROM read logic
+  byte spraysLeft1 = EEPROM.read(spraysLeftAddress);
+  byte spraysLeft2 = EEPROM.read(spraysLeftAddress + 1);
+  int spraysLeft = (spraysLeft1 << 8) + spraysLeft2; // combine the two bytes into one int
+  byte spraysShort = EEPROM.read(spraysShortAddress);
+  byte spraysLong = EEPROM.read(spraysLongAddress);
+  byte spraysShortDelay = EEPROM.read(spraysShortDelayAddress);
+  byte spraysLongDelay = EEPROM.read(spraysLongDelayAddress);
 
-  // TODO check if data is valid (not 255), or set to default
-  spraysLeft = ( false ) ? defaultTotalSprays : spraysLeft;
-  spraysShort = ( false ) ? 1 : spraysShort;
-  spraysLong = ( false ) ? 2 : spraysLong;
-  spraysShortDelay = ( false ) ? 0 : spraysShortDelay; // 0 corresponds to a 15s delay (minimum, built into freshener)
-  spraysLongDelay = ( false ) ? 1 : spraysLongDelay; // 1 corresponds to a 30s delay
+  // check if data is valid, and if not set to default
+  spraysLeft = (spraysLeft >= 0 && spraysLeft <= 2400) ? spraysLeft : defaultTotalSprays;
+  spraysShort = (spraysShort >= 0 && spraysShort <= 5) ? spraysShort : 1;
+  spraysLong = (spraysLong >= 0 && spraysLong <= 5) ? spraysLong : 2;
+  // 0 corresponds to a 15s delay (minimum, built into freshener)
+  spraysShortDelay = (spraysShortDelay >= 15 && spraysShortDelay <= 120) ? spraysShortDelay : 0;
+  // 1 corresponds to a 30s delay
+  spraysLongDelay = (spraysLongDelay >= 15 && spraysLongDelay <= 120) ? spraysLongDelay : 1;
 
   // save eeAddress and value for how many sprays the device has left
   spraysLeftSetup(spraysLeftAddress, spraysLeft);
@@ -94,7 +98,7 @@ void setup() {
   activateScreen();
 
   // show there's less than 5% of sprays remaining with a constantly burning yellow led
-  if (spraysLeft / defaultTotalSprays < 0.05) {
+  if ((spraysLeft * 100l) / defaultTotalSprays < 5) {
     yellowLed = 1;
   }
 }

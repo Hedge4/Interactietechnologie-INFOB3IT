@@ -2,6 +2,7 @@
 #define TOILET_DRIZZLER_9000_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
 
 #include <LiquidCrystal.h>
 #include <OneWire.h>

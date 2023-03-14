@@ -2,6 +2,8 @@
 #define MENUFUNCTIONS_H
 
 #include <Arduino.h>
+#include <EEPROM.h>
+
 #include "functions.h"
 #include "Toilet_Drizzler_9000.h"
 #include "deviceFunctions.h"
@@ -17,6 +19,7 @@ void spraysLongSetup(int eeAddress, int value);
 void spraysShortDelaySetup(int eeAddress, int value);
 void spraysLongDelaySetup(int eeAddress, int value);
 void spraysLeftSetup(int eeAddress, int value);
+void totalSpraysToEEPROM(int newValue);
 
 extern int spraysLeft;
 extern const int defaultTotalSprays;

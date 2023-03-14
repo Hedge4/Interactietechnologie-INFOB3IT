@@ -98,7 +98,8 @@ void startSpray() {
     spraying = true;
     yellowLed = 3; // the yellow led indicates the device is active with a fast blinking led
     if (spraysLeft > 0) spraysLeft--;
-    // TODO EEPROM UPDATE LOGIC HERE
+    // decrease totalSprays remaining by one in EEPROM as well
+    totalSpraysToEEPROM(spraysLeft);
     digitalWrite(sprayPin, HIGH);
     sprayTimestamp = millis();
     Serial.print(F("Spray started! Sprays left: "));
@@ -113,7 +114,7 @@ void startSpray(int amount) {
 }
 
 void startSpray(int amount, long waitUntilSpray) {
-  waitUntilSpray-= 15 * 1000; // 15 seconds wait period is built in
+  waitUntilSpray -= 15 * 1000; // 15 seconds wait period is built in
   plannedSpraysLeft = (amount > plannedSpraysLeft) ? amount : plannedSpraysLeft; // whichever value is higher
 
   // if value was 15000 (and now 0), start immediately

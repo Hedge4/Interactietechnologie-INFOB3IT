@@ -269,8 +269,8 @@ String deviceStateString() {
 
 void deviceLoop(unsigned long curTime) {
   // if menu is being used, interrupt detection, delay sprays, and return to idle
-  if (menuActive() && deviceState != 0) {
-    changeDeviceState(0);
+  if (menuActive()) {
+    if (deviceState != 0) changeDeviceState(0);
     return;
   }
 
@@ -336,11 +336,11 @@ void deviceLoop(unsigned long curTime) {
       // ...or a decision is forced if device has been detecting for too long (for cleaning or false alarm)
       detectionExpired = compareTimestamps(curTime, deviceTimestamp, deviceActiveTime);
 
-      // print which bool became true and led to exiting 'detect' state
-      Serial.print(F("Left detection state due to "));
-      Serial.println(finishedToilet ? "finishedToilet" : bathroomEmpty ? "bathroomEmpty" : detectionExpired ? "detectionExpired" : "UNKOWN REASON");
-
       if (finishedToilet || bathroomEmpty || detectionExpired) {
+
+        // print which bool became true and led to exiting 'detect' state
+        Serial.print(F("Left detection state due to "));
+        Serial.println(finishedToilet ? "finishedToilet" : bathroomEmpty ? "bathroomEmpty" : detectionExpired ? "detectionExpired" : "ERR: UNKOWN REASON");
 
         // if user was still on the toilet but detection stopped after deviceActiveTime, we still want that reading
         if (personIsOnToilet) {

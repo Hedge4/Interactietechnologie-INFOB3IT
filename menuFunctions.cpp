@@ -41,10 +41,11 @@ int currentDebugOption;                   // stores which debug option to show -
    4 --> Resets how many sprays are in the device to defaultTotalSprays
 */
 int currentSetting, currentValue;                               // index of selected setting and index of selected value
+// when the outer values of the below two lists change, update EEPROM read logic in .ino file as well
 const int sprayConfigOptions[6] = { 0, 1, 2, 3, 4, 5 };         // value options for spray amount settings
 const int delayConfigOptions[6] = { 15, 30, 45, 60, 90, 120 };  // value options for delay before spray settings
 const String configDesc[5] = { "Sprays after short visit", "Sprays after long visit", "Delay after short visit", "Delay after long visit", "Reset sprays remaining" };
-const int defaultTotalSprays = 2400;
+const int defaultTotalSprays = 2400;                  // if changed, update EEPROM read logic in .ino file as well
 
 int spraysShortSetting, spraysLongSetting;            // how many sprays after long/short visit
 int spraysShortAddr, spraysLongAddr;                  // EEPROM addresses
@@ -377,30 +378,31 @@ void chooseConfig() {
 
 // when a new setting is confirmed with the ok button
 void confirmConfig() {
+  // update the setting here, in deviceFunctions/sprayFunctions, and update EEPROM
   switch (currentSetting) {
     case 0:
       spraysShortSetting = currentValue;
-      // TODO EEPROM update logic
+      EEPROM.write(spraysShortAddr, currentValue);
       setSpraysShort(sprayConfigOptions[currentValue]);
       break;
     case 1:
       spraysLongSetting = currentValue;
-      // TODO EEPROM update logic
+      EEPROM.write(spraysLongAddr, currentValue);
       setSpraysLong(sprayConfigOptions[currentValue]);
       break;
     case 2:
       spraysShortDelaySetting = currentValue;
-      // TODO EEPROM update logic
+      EEPROM.write(spraysShortDelayAddr, currentValue);
       setSpraysShortDelay(1000l * delayConfigOptions[currentValue]);    // 1000 is a long to avoid overflow
       break;
     case 3:
       spraysLongDelaySetting = currentValue;
-      // TODO EEPROM update logic
+      EEPROM.write(spraysLongDelayAddr, currentValue);
       setSpraysLongDelay(1000l * delayConfigOptions[currentValue]);     // 1000 is a long to avoid overflow
       break;
     case 4:
       spraysLeft = defaultTotalSprays;
-      // TODO EEPROM update logic
+      totalSpraysToEEPROM(defaultTotalSprays);
       if (yellowLed == 1) yellowLed = 0; // stop indiciating device is almost empty
       break;
   }
@@ -510,6 +512,12 @@ void activateScreen() {
 
     changeMenuState(1);
   }
+}
+
+// updates both spraysLeft EEPROM addresses to the new value
+void totalSpraysToEEPROM(int newValue) {
+  EEPROM.write(spraysLeftAddr, newValue >> 8);
+  EEPROM.write(spraysLeftAddr + 1, newValue & 0xFF);
 }
 
 // whether the menu is being used (0 = idle, 1 = display, rest = active)
