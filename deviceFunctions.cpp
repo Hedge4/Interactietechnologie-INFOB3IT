@@ -236,6 +236,8 @@ void setSpraysLongDelay(unsigned long newValue) {
 
 // used to determine if the screen can be turned off
 bool deviceIsIdle(unsigned long curTime, int delay) {
+  curTime += 500; // add 500 ms since deviceTimestamp can be bigger than curTime
+  delay += 500;
   return ((deviceState == 0) && compareTimestamps(curTime, deviceTimestamp, delay));
 }
 

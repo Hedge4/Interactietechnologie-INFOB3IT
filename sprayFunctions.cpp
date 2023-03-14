@@ -118,6 +118,7 @@ void startSpray(int amount, long waitUntilSpray) {
 
   // if value was 15000 (and now 0), start immediately
   if (waitUntilSpray <= 0) {
+    plannedSpraysLeft--; // first spray is immediately activated so doesn't count
     startSpray();
     return;
   }
