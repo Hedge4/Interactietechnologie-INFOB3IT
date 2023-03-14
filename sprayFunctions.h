@@ -10,7 +10,7 @@
 void sprayLoop(unsigned long curTime);
 void startSpray();
 void startSpray(int amount);
-void startSpray(int amount, unsigned long waitUntilSpray);
+void startSpray(int amount, long waitUntilSpray);
 void cancelSprays();
 void sprayButtonUpdate(bool pressed);
 void spraysLeftSetup(int eeAddress, int value);

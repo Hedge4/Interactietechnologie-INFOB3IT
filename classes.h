@@ -38,13 +38,14 @@ class Sensor {
 // distancesensor
 class DistanceSensor : public Sensor {
   public:
-    int readSensitivity = 30;   // only update lastReading when reading differs by at least readSensitivity
-    // THESE logic should go to devicefunctions:
-    int noOneHereThreshold = 110;    // holds value when noone sits on the toilet
+    int readSensitivity = 30;         // only update lastReading when reading differs by at least readSensitivity
+    int orgNoOneHereThreshold = 110;  // holds original value when noone sits on the toilet
+    int noOneHereThreshold = 110;     // holds updated value when noone sits on the toilet, adjusted for environment
     int readings[6] = { };
-    int readIndex;
-    int unTriggerInterval = 5000; // only set trigger false two seconds after trigger was last active
-    unsigned long lastTriggered;  // remember when last triggered
+    unsigned long lastReadingTimestamp = 0;
+    int readIndex = 0;
+    int unTriggerInterval = 6000;     // wait six seconds because discord sensor often gives outlier outputs
+    unsigned long lastTriggered;      // remember when last triggered
     DistanceSensor(int interval);
     void update(unsigned long curTime);
 };
@@ -62,8 +63,8 @@ class LightSensor : public Sensor {
 
 class MotionSensor : public Sensor {
   public:
-    unsigned long motionsSensed;      // keep track of how much motion is being sensed. If high, likely cleaning
-    unsigned long inActiveInterval = 4000;   // used for Trigger, if no motion sent over period of time, become untriggered
+    unsigned long motionsSensed;            // keep track of how much motion is being sensed. If high, likely cleaning
+    unsigned long inActiveInterval = 5000;  // used for Trigger, if no motion sent over period of time, become untriggered
     unsigned long lastHigh;
     MotionSensor(int interval);
     void update(unsigned long curTime);

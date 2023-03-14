@@ -53,11 +53,12 @@ void Knop::update(int volt, unsigned long curTime) {
   lastButtonState = reading;
 }
 
+
+// DISTANCE SENSOR CLASS
+// DistanceSensor constructor
 DistanceSensor::DistanceSensor(int interval) {
   senseInterval = interval;
   readIndex = 0;
-
-
 }
 
 void DistanceSensor::update(unsigned long curTime) {
@@ -68,8 +69,8 @@ void DistanceSensor::update(unsigned long curTime) {
   }
   lastSensed = curTime;
 
-  // turn off trigger if too long has passed
-  if (lastReading > noOneHereThreshold) {
+  // turn off trigger if too long has passed (zero means distance is farther than measurable)
+  if (lastReading > noOneHereThreshold || lastReading == 0) {
     if (compareTimestamps(curTime, lastTriggered, unTriggerInterval))
       triggered = false;
   }
@@ -80,7 +81,8 @@ void DistanceSensor::update(unsigned long curTime) {
   if (abs(reading - lastReading) > readSensitivity) {
     changed = true;
     lastReading = reading;
-    if (lastReading < noOneHereThreshold) {
+    // zero means farther distance than can be measured
+    if (lastReading < noOneHereThreshold && lastReading > 0) {
       triggered = true;
       lastTriggered = curTime;
     }
@@ -89,26 +91,29 @@ void DistanceSensor::update(unsigned long curTime) {
     changed = false;
   }
 
-
   // if 60 seconds of time has elapsed, do a measurement
-  // so we can get standards
-  if (curTime % 60000 == 0) {
+  // so we can get standards for the specific environment the sensor is in
+  if (compareTimestamps(curTime, lastReadingTimestamp, 60l * 1000)) {
+    lastReadingTimestamp = curTime;
     readings[readIndex] = reading;
-    readIndex++;
-    // loop readIndex
-    if (readIndex >= 6) {
-      readIndex = 0;
-      // calculate average reading, remove a bit and set that as new threshold
-      int sum = 0;
-      for (int i = 0; i < 6; i++)
-        sum += readings[i];
+    if (++readIndex >= 6) readIndex = 0; // set next readIndex, loop before 6
 
-      noOneHereThreshold = (sum / 6) - 10;
+    // calculate new average for our new threshold
+    int sum = 0;
+    for (int i = 0; i < 6; i++) {
+      // if reading is zero use our default threshold, we don't want 0 as a threshold
+      sum += readings[i] != 0 ? readings[i] : orgNoOneHereThreshold;
     }
+
+    // remove 10 because threshold should be lower than the average (we want to detect significantly lower than average values)
+    noOneHereThreshold = (sum / 6) - 10;
   }
 
 }
 
+
+// LIGHT SENSOR CLASS
+// LightSensor constructor
 LightSensor::LightSensor(int interval) {
   senseInterval = interval;
 }
@@ -136,6 +141,8 @@ bool LightSensor::isLightOn() {
 }
 
 
+// MOTION SENSOR CLASS
+// MotionSensor constructor
 MotionSensor::MotionSensor(int interval) {
   senseInterval = interval;
   motionsSensed = 0; // during frame of detection, count how many times motion is detected
@@ -175,6 +182,9 @@ void MotionSensor::resetSensor() {
   motionsSensed = 0;
 }
 
+
+// TEMPERATURE SENSOR CLASS
+// TemperatureSensor constructor
 TemperatureSensor::TemperatureSensor(int interval) {
   senseInterval = interval;
 }

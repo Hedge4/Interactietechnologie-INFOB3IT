@@ -14,8 +14,7 @@ void setSpraysShortDelay(unsigned long newValue);
 void setSpraysLongDelay(unsigned long newValue);
 
 // getters
-bool deviceIsIdle();
-int temperature();
+bool deviceIsIdle(unsigned long curTime, int delay);
 String deviceStateString();
 extern int yellowLed; // '0' for off, '1' for on, '2' for slow blink, '3' for fast blink
 extern int greenLed;

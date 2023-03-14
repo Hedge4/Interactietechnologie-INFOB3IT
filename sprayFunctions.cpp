@@ -78,7 +78,8 @@ void startSpray() {
   if (waiting || spraying) {
     // when still waiting or spraying, schedule another spray
     plannedSpraysLeft = (1 > plannedSpraysLeft) ? 1 : plannedSpraysLeft; // set to 1 if 0
-    Serial.println("Remaining sprays set to: " + String(plannedSpraysLeft));
+    Serial.print(F("Remaining sprays set to: "));
+    Serial.println(plannedSpraysLeft);
   } else {
     spraying = true;
     yellowLed = 3; // the yellow led indicates the device is active with a fast blinking led
@@ -86,7 +87,8 @@ void startSpray() {
     // TODO EEPROM UPDATE LOGIC HERE
     digitalWrite(sprayPin, HIGH);
     sprayTimestamp = millis();
-    Serial.println("Spray started! Sprays left: " + String(plannedSpraysLeft));
+    Serial.print(F("Spray started! Sprays left: "));
+    Serial.println(plannedSpraysLeft);
   }
 }
 
@@ -96,13 +98,24 @@ void startSpray(int amount) {
   startSpray();
 }
 
-void startSpray(int amount, unsigned long waitUntilSpray) {
+void startSpray(int amount, long waitUntilSpray) {
+  waitUntilSpray-= 15 * 1000; // 15 seconds wait period is built in
   plannedSpraysLeft = (amount > plannedSpraysLeft) ? amount : plannedSpraysLeft; // whichever value is higher
-  cancelSprays(); // we need to wait, so cancel current sprays
+
+  // if value was 15000 (and now 0), start immediately
+  if (waitUntilSpray <= 0) {
+    startSpray();
+    return;
+  }
+
+  // we need to wait, so cancel current sprays
+  cancelSprays();
 
   yellowLed = 1; // signify there are more sprays coming
   delayBeforeSpray = waitUntilSpray; // after this delay, will switch to spraying
   sprayDelayStartTime = millis();
+  Serial.print(F("Waiting before spraying (ms): "));
+  Serial.println(waitUntilSpray);
 }
 
 // stop ongoing and cancel upcoming sprays

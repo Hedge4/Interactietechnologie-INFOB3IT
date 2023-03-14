@@ -92,7 +92,7 @@ void spraysLeftSetup(int eeAddress, int value) {
 }
 
 String displayStateTopText() {
-  return "Temperature: " + String(temperature()) + "   Sprays left: " + String(spraysLeft);
+  return "Temperature: " + String(temperatureSensor.lastReading) + "   Sprays left: " + String(spraysLeft);
 }
 
 String displayStateBottomText() {
@@ -191,7 +191,8 @@ void changeMenuState(int newState) {
     menuState = newState;
     menuTimestamp = millis();
 
-    Serial.println("Switched to menuState " + String(newState));
+    Serial.print(F("Switched to menuState "));
+    Serial.println(newState);
 
     // state initialisation logic
     switch (newState) {
@@ -247,7 +248,7 @@ void changeDebugView(bool changeOption = true) {
       break;
     case 3:
       if (changeOption) topText = "Temperature: ";
-      bottomText = String(temperature());
+      bottomText = String(temperatureSensor.lastReading);
       break;
     case 4:
       if (changeOption) topText = "Distance: ";
@@ -409,7 +410,7 @@ void confirmConfig() {
 }
 
 void leaveStartup() {
-  Serial.println("Closed startup text, menu is now in regular display state!");
+  Serial.println("Closed startup text, menu is now in regular display state");
   startup = false;
   topText = displayStateTopText();
   bottomText = displayStateBottomText();
@@ -496,7 +497,7 @@ void activateScreen() {
   // only does something if screen was turned off
   if (menuState == 0) {
     if (startup) {
-      Serial.println("Now showing startup text in menu display state!");
+      Serial.println("Now showing startup text in menu display state");
       menuState = 1; // startup is part of the display state but the text is only set here
       powerBacklight(true);
       // startup initialisation text
@@ -529,7 +530,7 @@ void menuLoop(unsigned long curTime) {
   if (menuState == 1) {
     // turn display off if bathroom is unused AND display is inactive for too long
     if (compareTimestamps(curTime, menuTimestamp, displayOffDelay)) {
-      if (deviceIsIdle()) {
+      if (deviceIsIdle(curTime, displayOffDelay)) {
         changeMenuState(0);
         return;
       }
