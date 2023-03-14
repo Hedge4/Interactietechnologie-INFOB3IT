@@ -33,8 +33,8 @@ unsigned long ledsTimestamp = 0, ledsDelay = 40;  // when leds logic was last ch
 // vars for detecting
 unsigned long personOnToiletTimestamp = 0;  // linked to distance sensor, stars up when person is sitting on toilet
 unsigned long toiletTime = 0;               // save length of sitting-on-toilet visit
-int personOnToiletShortThreshold = 15000;   // short visit threshold (only longer than accidental cleaning triggers)
-long personOnToiletLongThreshold = 100000;  // long visit threshold (shorter than average, because detection often resets)
+int personOnToiletShortThreshold = 12000;   // short visit threshold (only longer than accidental cleaning triggers)
+long personOnToiletLongThreshold = 80000;   // long visit threshold (shorter than average, because detection often resets)
 bool personIsOnToilet = false;
 bool personHasGoneToToilet = false;
 bool doorClosedDuringVisit = false;

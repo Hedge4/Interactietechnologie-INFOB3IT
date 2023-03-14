@@ -113,7 +113,6 @@ void loop() {
 void alwaysUpdate(unsigned long curTime) {
   int buttonStatus = analogRead(buttonsPin);
 
-  // TODO add in update functions deviceStateChange to 'menu in use'
   menuButton.update(buttonStatus, curTime);
   okButton.update(buttonStatus, curTime);
   sprayButton.update(buttonStatus, curTime);

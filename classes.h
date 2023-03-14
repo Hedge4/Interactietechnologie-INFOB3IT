@@ -44,7 +44,7 @@ class DistanceSensor : public Sensor {
     int readings[6] = { };
     unsigned long lastReadingTimestamp = 0;
     int readIndex = 0;
-    int unTriggerInterval = 6000;     // wait six seconds because discord sensor often gives outlier outputs
+    int unTriggerInterval = 4000;     // wait four seconds because discord sensor often gives outlier outputs
     unsigned long lastTriggered;      // remember when last triggered
     DistanceSensor(int interval);
     void update(unsigned long curTime);
