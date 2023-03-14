@@ -191,7 +191,7 @@ void changeMenuState(int newState) {
     menuState = newState;
     menuTimestamp = millis();
 
-    Serial.println("Changed to menuState " + String(newState));
+    Serial.println("Switched to menuState " + String(newState));
 
     // state initialisation logic
     switch (newState) {
@@ -408,6 +408,15 @@ void confirmConfig() {
   changeMenuState(1);
 }
 
+void leaveStartup() {
+  Serial.println("Closed startup text, menu is now in regular display state!");
+  startup = false;
+  topText = displayStateTopText();
+  bottomText = displayStateBottomText();
+  lcd.clear();
+  setText();
+}
+
 
 ////////////////////////
 // EXTERNAL FUNCTIONS //
@@ -432,11 +441,7 @@ void menuButtonUpdate(bool pressed, bool longPressed) {
       case 1:
         if (startup) {
           // quits early out of startup text
-          startup = false;
-          topText = displayStateTopText();
-          bottomText = displayStateBottomText();
-          lcd.clear();
-          setText();
+          leaveStartup();
           return;
         }
         changeMenuState(2);
@@ -468,11 +473,7 @@ void okButtonUpdate(bool pressed) {
       case 1:
         if (startup) {
           // quits early out of startup text
-          startup = false;
-          topText = displayStateTopText();
-          bottomText = displayStateBottomText();
-          lcd.clear();
-          setText();
+          leaveStartup();
           return;
         }
         changeMenuState(2);
@@ -495,6 +496,7 @@ void activateScreen() {
   // only does something if screen was turned off
   if (menuState == 0) {
     if (startup) {
+      Serial.println("Now showing startup text in menu display state!");
       menuState = 1; // startup is part of the display state but the text is only set here
       powerBacklight(true);
       // startup initialisation text
@@ -536,11 +538,7 @@ void menuLoop(unsigned long curTime) {
     if (startup) {
       // after this initialisation time, quits out of startup text
       if (curTime > startupDuration) {
-        startup = false;
-        topText = displayStateTopText();
-        bottomText = displayStateBottomText();
-        lcd.clear();
-        setText();
+        leaveStartup();
       }
 
       return;

@@ -34,12 +34,11 @@ Knop sprayButton(672, 692);   // value of 1023 * 2/3 = ~682
 // connect magnetic sensor at end of resistance bridge so it does not block other buttons when opened/closed.
 Knop magneticSensor(758, 778); // value of 1023 * 3/4 = ~768
 
-// initialise the other sensors, intervals chosen arbitrarely
-DistanceSensor distSensor(250);
-LightSensor lightSensor(250);
+// initialise the other sensors, intervals chosen somewhat arbitrarily
+DistanceSensor distSensor(50);
 MotionSensor motionSensor(100);
-TemperatureSensor temperatureSensor(2000);
-
+LightSensor lightSensor(200);
+TemperatureSensor temperatureSensor(2000);  // temperatureSensor is the slowest and not important for detection
 
 void setup() {
   // configure the LCD screen
