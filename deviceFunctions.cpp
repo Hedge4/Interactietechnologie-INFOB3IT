@@ -262,6 +262,12 @@ String deviceStateString() {
 ////////////////////////////
 
 void deviceLoop(unsigned long curTime) {
+  // if menu is being used, interrupt detection, delay sprays, and return to idle
+  if (menuActive() && deviceState != 0) {
+    changeDeviceState(0);
+    return;
+  }
+
   // update sensors
   motionSensor.update(curTime);
   distSensor.update(curTime);
@@ -278,16 +284,6 @@ void deviceLoop(unsigned long curTime) {
       }
       break;
     case 1:
-      // if menu is being used, interrupt detection, delay sprays
-      if (menuActive()) {
-        motionSensor.resetSensor();
-        personIsOnToilet = false;
-        toiletTime = 0;
-        personHasGoneToToilet = false;
-        doorClosedDuringVisit = false;
-        doorOpenedAfterVisit = false;
-      }
-
       // tick the person goes sitting on toilet, sensed with distancesensor
       if (!personIsOnToilet && distSensor.triggered) {
         personOnToiletTimestamp = curTime;
