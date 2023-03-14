@@ -27,12 +27,12 @@ class Knop {
 // general sensor class
 class Sensor {
   public:
-    bool active = true;     // determines whether sensor will be read
-    int senseInterval;      // determines interval of readings
-    int lastReading = 0;    // saves last measurement sensor has taken
-    int lastSensed = 0;     // saves when last  measurement was taken
-    bool changed = false;   // saves if sensors measurement changed this tick
-    bool triggered = false; // sensor specific 'triggered'
+    bool active = true;             // determines whether sensor will be read
+    int senseInterval;              // determines interval of readings
+    int lastReading = 0;            // saves last measurement sensor has taken
+    unsigned long lastSensed = 0;   // saves when last  measurement was taken
+    bool changed = false;           // saves if sensors measurement changed this tick
+    bool triggered = false;         // sensor specific 'triggered'
 };
 
 // distancesensor
@@ -71,7 +71,12 @@ class MotionSensor : public Sensor {
     void resetSensor();
 };
 
+// I stole this from the DallasTemperature library
+typedef uint8_t DeviceAddress[8];
+
 class TemperatureSensor : public Sensor {
+  DeviceAddress deviceAddress;
+
   public:
     TemperatureSensor(int interval);
     void update(unsigned long curTime);

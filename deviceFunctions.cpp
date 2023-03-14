@@ -265,7 +265,7 @@ void deviceLoop(unsigned long curTime) {
   // update sensors
   motionSensor.update(curTime);
   distSensor.update(curTime);
-  // temperatureSensor.update(curTime);
+  temperatureSensor.update(curTime);
   lightSensor.update(curTime);
   // magneticSensor already gets updated in other loop
 

@@ -187,6 +187,8 @@ void MotionSensor::resetSensor() {
 // TemperatureSensor constructor
 TemperatureSensor::TemperatureSensor(int interval) {
   senseInterval = interval;
+  // save address so we can directly request the temperature
+  dallasTemperatureSensor.getAddress(deviceAddress, 0);
 }
 
 void TemperatureSensor::update(unsigned long curTime) {
@@ -196,8 +198,10 @@ void TemperatureSensor::update(unsigned long curTime) {
   }
   lastSensed = curTime;
 
-  dallasTemperatureSensor.requestTemperatures(); // Send the command to get temperatures
+  // getting temperature by address is faster than requesting from all buses
+  dallasTemperatureSensor.requestTemperaturesByAddress(deviceAddress); // Send the command to get temperatures
   float tempC = dallasTemperatureSensor.getTempCByIndex(0);
+
   // Check if reading was successful
   if (tempC != DEVICE_DISCONNECTED_C)
   {
