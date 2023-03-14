@@ -38,6 +38,7 @@ long personOnToiletLongThreshold = 100000;  // threhsold for long visit
 bool personIsOnToilet = false;
 bool personHasGoneToToilet = false;
 bool doorClosedDuringVisit = false;
+bool doorOpenedAfterVisit = false;
 int motionsForCleaningThreshold = 12;
 
 
@@ -276,6 +277,11 @@ void deviceLoop(unsigned long curTime) {
 
   switch (deviceState) {
     case 0:
+      // start detection mode if we 'detect motion AND (the light is on OR the door is open)' --> someone entered
+      if (motionSensor.triggered && (lightSensor.isLightOn() || !magneticSensor.pressed)) {
+        changeDeviceState(1);
+        return;
+      }
       break;
     case 1:
       // tick the person goes sitting on toilet, sensed with distancesensor
@@ -283,11 +289,10 @@ void deviceLoop(unsigned long curTime) {
         personHasGoneToToilet = false;
         personOnToiletTimestamp = curTime;
         personIsOnToilet = true;
-        doorClosedDuringVisit = magneticSensor.pressed;
       }
 
       // tick the person moves away from toilet, sensed with distancesensor
-      if (personIsOnToilet && !distSensor.triggered) {
+      if (personIsOnToilet && !distSensor.triggered && toiletTime > personOnToiletShortThreshold) {
         personHasGoneToToilet = true;
         int ttReading = curTime - personOnToiletTimestamp;
         if (ttReading > toiletTime) {
@@ -296,26 +301,45 @@ void deviceLoop(unsigned long curTime) {
         }
       }
 
-      // decision logic
-      // make decision when toilet is not in use -> light is off
-      // or time has elapsed
-      // only make decision onces motionSensor has cooled off
-      if ((!(lightSensor.isLightOn() || motionSensor.triggered)  && !motionSensor.triggered && personHasGoneToToilet)
-        // a decision is forced if device has been detecting for too long
+      // only start to check if this person closed the door 5 seconds after detection started
+      if (!doorClosedDuringVisit && compareTimestamps(curTime, deviceTimestamp, 5000)) {
+        if (!compareTimestamps(curTime, deviceTimestamp, 60 * 1000)) {
+          // stop checking after 1 minute of usage, doorclosing after this is likely just someone leaving
+          if (magneticSensor.pressed) {
+            // only becomes true if door is closed during detection, and stays true
+            doorClosedDuringVisit = magneticSensor.pressed;
+          }
+        }
+      }
+
+      if ((personIsOnToilet || personHasGoneToToilet) && doorClosedDuringVisit) {
+        // check if door has opened since start of toilet usage, if it was closed at first
+        if (!magneticSensor.pressed) {
+          // if true, that means at some point after toilet usage the door was opened
+          doorOpenedAfterVisit = true;
+        }
+      }
+
+      // DECISION LOGIC
+      // Make a decision once motionSensor has cooled off and someone was detected near the toilet
+      if ((!motionSensor.triggered && personHasGoneToToilet)
+        // ...or when bathroom is empty before detection finished --> no motion AND (no light OR door was opened and closed)
+        || (!motionSensor.triggered && (!lightSensor.isLightOn() || (magneticSensor.pressed && doorOpenedAfterVisit)))
+        // ...or a decision is forced if device has been detecting for too long (for cleaning or false alarm)
         || (compareTimestamps(curTime, deviceTimestamp, deviceActiveTime))) {
 
         // check amount of motion. if A lot happened, cleaning has happend or just a long visit
-        if (motionSensor.motionsSensed >= motionsForCleaningThreshold && !doorClosedDuringVisit) {
-          Serial.print("Num_1 use case detected. ");
+        if (motionSensor.motionsSensed >= motionsForCleaningThreshold && (!doorClosedDuringVisit || !personHasGoneToToilet)) {
+          Serial.print("Cleaning use case detected. ");
           changeDeviceState(4);
         }
         // decide if this was a long or short visit
-        else if (toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold) {
-          Serial.print("Num_2 use case detected. ");
+        else if (personHasGoneToToilet && toiletTime < personOnToiletLongThreshold && toiletTime > personOnToiletShortThreshold) {
+          Serial.print("Num_1 use case detected. ");
           changeDeviceState(2);
         }
-        else if (toiletTime > personOnToiletLongThreshold) {
-          Serial.print("Cleaning use case detected. ");
+        else if (personHasGoneToToilet && toiletTime > personOnToiletLongThreshold) {
+          Serial.print("Num_2 use case detected. ");
           changeDeviceState(3);
         } else {
           Serial.print("No use case detected, going back to idle state. ");
