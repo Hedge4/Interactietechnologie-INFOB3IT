@@ -2,11 +2,20 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include <Adafruit_BMP280.h>
 #include <BlockNot.h>   
 
+
+//bmp definitions
+#define BMP_SCK  (13)
+#define BMP_MISO (12)
+#define BMP_MOSI (11)
+#define BMP_CS   (10)
+Adafruit_BMP280 bmp;
+
+//oled definitiions
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
 #define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
 #define SCREEN_ADDRESS 0x3C 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -15,18 +24,18 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 int selPin = D6;  //write LOW for LDR, HIGH for moist
 int aPin = A0;
 
-//hold readings
+//reading vars
 int ldrReading;
 int moistReading;
-
+float tempReading;
+float pressureReading;
 
 //timers
-BlockNot oledRefresh(2000);    //interval of reading sensors
-BlockNot ldrInterval(100);
+BlockNot oledRefresh(2000);    
+BlockNot ldrInterval(100);      //interval of reading sensors
 BlockNot moistInterval(1000);
+BlockNot bmpInterval(3000);
 int moistReadBuffer = 150;     //can only get data after at least 100ms after turning on
-
-
 
 void setup() {
   Serial.begin(9600);
@@ -38,18 +47,26 @@ void setup() {
   }
   setOLEDconfig();
 
+  //bmp setup
+  unsigned status;
+  status = bmp.begin(BMP280_ADDRESS_ALT, BMP280_CHIPID);    //CHANGE UP TO MAKE WORK?
+  bmp.setSampling(Adafruit_BMP280::MODE_NORMAL,     /* Operating Mode. */
+                  Adafruit_BMP280::SAMPLING_X2,     /* Temp. oversampling */
+                  Adafruit_BMP280::SAMPLING_X16,    /* Pressure oversampling */
+                  Adafruit_BMP280::FILTER_X16,      /* Filtering. */
+                  Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
+                
   //pin setup
   pinMode(selPin, OUTPUT);
 
-
 }
-
 
 
 void loop() {
 
   //update sensors
   checkAmuxSensors();
+  checkBmpSensors();
 
   //update oled
   if(oledRefresh.triggered()){
@@ -62,23 +79,26 @@ void checkAmuxSensors(){
   //read ldr at interval
   if(ldrInterval.triggered()){
     ldrReading = analogRead(A0);
-    Serial.print("LDR: "); Serial.println(digitalRead(selPin));
-
   }
   //set selPin to high so moist can be read after buffer time
   if(moistInterval.triggered()){
     digitalWrite(selPin, HIGH);
-    Serial.println("WAIT"); 
     ldrInterval.stop();  //stop ldr reading whilst this is going on    
   }
   //read moisture, start up ldr again
   if(ldrInterval.isStopped() && moistInterval.getTimeSinceLastReset() >= moistReadBuffer){
     moistReading = analogRead(A0);
     digitalWrite(selPin, LOW);
-    Serial.print("MOIST: "); Serial.println(digitalRead(selPin));
     ldrInterval.start();
   }
 
+}
+
+void checkBmpSensors(){
+  if(bmpInterval.triggered()){
+    tempReading = bmp.readTemperature();
+    pressureReading = bmp.readPressure();
+  }
 }
 
 
@@ -91,6 +111,8 @@ void drawReadings(){
   display.println("Sensor Information");
   display.print("Moisture: "); display.println(moistReading);
   display.print("Light: "); display.println(ldrReading);
+  display.print("Pressure: "); display.print(pressureReading / 100000); display.println(" bar");
+  display.print("Temperature: "); display.print(tempReading); display.println(" *C");
   display.println("--------------------");  
 
   //refresh display
