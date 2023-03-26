@@ -1,10 +1,4 @@
-
-#include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
-#include <Adafruit_BMP280.h>
-#include <BlockNot.h>   
-
+#include "Plant_Drizzler.h"
 
 //bmp definitions
 #define BMP_SCK  (13)
@@ -20,6 +14,9 @@ Adafruit_BMP280 bmp;
 #define SCREEN_ADDRESS 0x3C 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+//servo definitions
+Servo myservo;
+
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
 int aPin = A0;
@@ -32,10 +29,10 @@ float pressureReading;
 
 //timers
 BlockNot oledRefresh(2000);    
-BlockNot ldrInterval(100);      //interval of reading sensors
+BlockNot ldrInterval(100);          
 BlockNot moistInterval(1000);
 BlockNot bmpInterval(3000);
-int moistReadBuffer = 150;     //can only get data after at least 100ms after turning on
+int moistReadBuffer = 150;          //can only get data after at least 100ms after turning on
 
 void setup() {
   Serial.begin(9600);
@@ -56,50 +53,22 @@ void setup() {
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
                 
+  //servo setup
+  //myservo.attach(2);
+  
   //pin setup
-  pinMode(selPin, OUTPUT);
+  pinMode(selPin, OUTPUT);  
 
 }
 
 
 void loop() {
+  updateAllSensors();
 
-  //update sensors
-  checkAmuxSensors();
-  checkBmpSensors();
-
-  //update oled
-  if(oledRefresh.triggered()){
-    drawReadings();
-  }
+  updateOLED(false);
 
 }
 
-void checkAmuxSensors(){
-  //read ldr at interval
-  if(ldrInterval.triggered()){
-    ldrReading = analogRead(A0);
-  }
-  //set selPin to high so moist can be read after buffer time
-  if(moistInterval.triggered()){
-    digitalWrite(selPin, HIGH);
-    ldrInterval.stop();  //stop ldr reading whilst this is going on    
-  }
-  //read moisture, start up ldr again
-  if(ldrInterval.isStopped() && moistInterval.getTimeSinceLastReset() >= moistReadBuffer){
-    moistReading = analogRead(A0);
-    digitalWrite(selPin, LOW);
-    ldrInterval.start();
-  }
-
-}
-
-void checkBmpSensors(){
-  if(bmpInterval.triggered()){
-    tempReading = bmp.readTemperature();
-    pressureReading = bmp.readPressure();
-  }
-}
 
 
 void drawReadings(){
