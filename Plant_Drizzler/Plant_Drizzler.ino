@@ -28,11 +28,13 @@ float tempReading;
 float pressureReading;
 
 //timers
-BlockNot oledRefresh(2000);    
 BlockNot ldrInterval(100);          
 BlockNot moistInterval(1000);
 BlockNot bmpInterval(3000);
 int moistReadBuffer = 150;          //can only get data after at least 100ms after turning on
+
+//some more vars
+int menuState;
 
 void setup() {
   Serial.begin(9600);
@@ -59,6 +61,8 @@ void setup() {
   //pin setup
   pinMode(selPin, OUTPUT);  
 
+  //some more setup
+  menuState = 0;
 }
 
 
@@ -66,28 +70,8 @@ void loop() {
   updateAllSensors();
 
   updateOLED(false);
-
 }
 
-
-
-void drawReadings(){
-  //prep display
-  display.clearDisplay();
-  display.setCursor(0, 0);     // Start at top-left corner
-
-  //print info
-  display.println("Sensor Information");
-  display.print("Moisture: "); display.println(moistReading);
-  display.print("Light: "); display.println(ldrReading);
-  display.print("Pressure: "); display.print(pressureReading / 100000); display.println(" bar");
-  display.print("Temperature: "); display.print(tempReading); display.println(" *C");
-  display.println("--------------------");  
-
-  //refresh display
-  display.display();
-  
-}
 
 
 void setOLEDconfig(){  
