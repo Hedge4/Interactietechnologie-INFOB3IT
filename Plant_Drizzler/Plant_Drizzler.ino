@@ -26,6 +26,11 @@ int ldrReading;
 int moistReading;
 float tempReading;
 float pressureReading;
+int lightLevel;     //0..3 -> maps light to 4 different ranges for threshold/display purpose
+int moistLevel;     //0..3 -> same as lightLevel
+
+//generate menuState here, we can use this to change menu state from here
+int menuState;
 
 //timers
 BlockNot ldrInterval(100);          
@@ -33,8 +38,11 @@ BlockNot moistInterval(1000);
 BlockNot bmpInterval(3000);
 int moistReadBuffer = 150;          //can only get data after at least 100ms after turning on
 
-//some more vars
-int menuState;
+//vars for automatic mode
+//int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
+//bool madeDecision;
+//bool givingWater;
+
 
 void setup() {
   Serial.begin(9600);
@@ -63,12 +71,19 @@ void setup() {
 
   //some more setup
   menuState = 0;
+  updateOLED(true);
+  madeDecision = false;
+
 }
 
 
+
 void loop() {
+
+  //update the sensors
   updateAllSensors();
 
+  //update the oled (not forced)
   updateOLED(false);
 }
 
