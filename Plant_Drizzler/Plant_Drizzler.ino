@@ -16,6 +16,8 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 //servo definitions
 Servo myservo;
+//Arm armpie;
+
 
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
@@ -48,11 +50,13 @@ int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;
 
 //servo vars
-BlockNot servoGracePeriod(2000);  //give servo some time at start of program to move to its starting position
-bool servoAvailable;              //if true, servo is currently NOT performing movement and can be written to
-bool servoAtWateringPosition;     //
-int servoStartPosition = 0;       //servo returns to starting position at start of program
-int servoWateringPosition = 180;  //position servo should be in to get water flowing
+BlockNot servoGracePeriod(2000);        //give servo some time at start of program to move to its starting position
+BlockNot holdAtWateringPosition(5000);   //hold servo at watering position for this much time
+bool servoAvailable;                    //if true, servo is currently NOT performing movement and can be written to
+bool servoAtWateringPosition;           //
+int servoStartPosition = 0;             //servo returns to starting position at start of program
+int servoWateringPosition = 180;        //position servo should be in to get water flowing
+bool dispensing;                        //if true, servo currently moving towards watering position. False -> moving towards startposition
 
 
 void setup() {
@@ -86,9 +90,8 @@ void setup() {
   myservo.attach(2);
   myservo.write(servoStartPosition);
   servoAvailable = false;
-  servoGracePeriod.reset();
-
-  //more setup
+  servoGracePeriod.reset(true);
+  dispensing = false;
   givingWater = false;
 
 }
@@ -100,26 +103,69 @@ void loop() {
   //update the sensors
   updateAllSensors();
 
-  //Servo must finishes its startup movement before coming available
-  if(servoGracePeriod.triggered()){
-    servoAvailable = true;
-    myservo.detach();   
-  }
-
-  //if in automatic AND the soil is dry AND no command has been issued yet AND servo is available
-  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && servoAvailable){
-    setupWaterGiving();
-  }
-
-  if(givingWater){
-    maintainGivingWater();
-  }
 
   //update the oled according to oled refresh rate
   updateOLED(false);
 
 }
 
+
+
+//handle water dispenser flow
+void waterLoop(){
+  delay(2000);
+  //if in automatic AND the soil is dry AND no command has been issued yet AND servo is available
+  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && servoAvailable){
+    //prepare to give water
+    givingWater = true;
+    dispensing = true;  //currently moving towards watering position
+    //setup servo
+    myservo.attach(2);
+    activateServo(servoWateringPosition); //move servo to position, disable other calls
+
+    //also stop timer so it returns false when asked for triggers
+    holdAtWateringPosition.reset();
+    holdAtWateringPosition.stop();
+
+    Serial.println("MOVING TO WATERPOS");
+  }
+
+  if(givingWater){
+    //first wait untill servo reaches dispensing position
+    //then wait a bit
+    if(servoAvailable && dispensing && holdAtWateringPosition.isStopped())
+    {
+      Serial.println("REACHED WATERPOS");
+      holdAtWateringPosition.start(); //starts and resets the timer
+    }  
+
+    //after waiting a bit, return to original position
+    if(holdAtWateringPosition.triggered() && dispensing){
+      Serial.println("MOVING TO STARTPOS");
+      activateServo(servoStartPosition); //move servo to position, disable other calls
+      dispensing = false;
+    }
+
+    //if returned to original position, mark watering plant as completed
+    if(servoAvailable && !dispensing){
+      Serial.println("WATERING COMPLETED");
+      givingWater = false;
+    }
+  }
+}
+
+
+
+
+void activateServo(int position){
+  //move servo to position
+  myservo.write(position);
+  //start grace timer
+  servoGracePeriod.reset(true);
+  //make servo unavailable for calls
+  servoAvailable = false;
+
+}
 
 //if in automatic mode, change to manual
 //otherwise change to automatic mode
@@ -139,19 +185,6 @@ void changeMode(){
 }
 
 
-//prepares the system to give water
-void setupWaterGiving(){
-  //setup servo
-  myservo.attach(2);
-  myservo.write(servoWateringPosition);
-
-}
-
-void maintainGivingWater(){
-  if(myservo.read() == )
-
-}
-
 //sets default font (size) for oled to use
 void setOLEDconfig(){  
   display.clearDisplay();
@@ -159,5 +192,55 @@ void setOLEDconfig(){
   display.setTextColor(SSD1306_WHITE); // Draw white text
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 }
+
+
+
+
+
+Arm::Arm(int startPosition, int endPosition){
+  myservo.attach(2);
+  startPos = startPosition;
+  waterPos = endPosition;
+  pos = myservo.read();
+  moveArm(startPos);
+  moveDelay = BlockNot(15);
+}
+
+void Arm::update(){
+  if(moveDelay.triggered()){
+    //move towards targets
+    if(movingTowards > pos){
+      pos += 1;
+      myservo.write(pos);
+    }
+    else if(movingTowards < pos){
+      pos -= 1;
+      myservo.write(pos);
+    }
+    else{
+      available = true;
+    }
+  }
+}
+
+void Arm::moveArm(int position){
+  //only allow if servo is available
+  if (!available) { return; }
+  movingTowards = position;
+  available = false;
+}
+
+void Arm::toggleArm(bool t){
+  if(t){
+    myservo.attach(2);
+  }
+  else{
+    myservo.detach();
+  }  
+}
+
+
+
+
 
 
