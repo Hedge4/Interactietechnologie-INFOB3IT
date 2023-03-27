@@ -32,16 +32,27 @@ int moistLevel;     //0..3 -> same as lightLevel
 //generate menuState here, we can use this to change menu state from here
 int menuState;
 
-//timers
-BlockNot ldrInterval(100);          
-BlockNot moistInterval(1000);
-BlockNot bmpInterval(3000);
-int moistReadBuffer = 150;          //can only get data after at least 100ms after turning on
+//determine if device is in automatic mode or not
+bool automaticMode = true;
 
-//vars for automatic mode
-//int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
-//bool madeDecision;
-//bool givingWater;
+//timers
+BlockNot ldrInterval(100);            //interval at which light gets checked 
+BlockNot moistInterval(1000);         //interval at which moisture sensor gets checked, should not be lower than ldr
+int moistReadBuffer = 150;            //can only get data after at least 100ms after turning on
+BlockNot bmpInterval(3000);           //interval at which pressure and temperature gets checked
+BlockNot oledRefreshRate(2000);       //interval at which oled is updated to account for new sensor readings
+BlockNot changeMenuInterval(5000);    //interval at which a new menu screen is shown int automatic mode
+
+//plant watering vars
+int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
+bool givingWater;
+
+//servo vars
+BlockNot servoGracePeriod(2000);  //give servo some time at start of program to move to its starting position
+bool servoAvailable;              //if true, servo is currently NOT performing movement and can be written to
+bool servoAtWateringPosition;     //
+int servoStartPosition = 0;       //servo returns to starting position at start of program
+int servoWateringPosition = 180;  //position servo should be in to get water flowing
 
 
 void setup() {
@@ -63,16 +74,22 @@ void setup() {
                   Adafruit_BMP280::FILTER_X16,      /* Filtering. */
                   Adafruit_BMP280::STANDBY_MS_500); /* Standby time. */
                 
-  //servo setup
-  //myservo.attach(2);
   
   //pin setup
   pinMode(selPin, OUTPUT);  
 
-  //some more setup
+  //go to menu screen
   menuState = 0;
   updateOLED(true);
-  madeDecision = false;
+
+  //bring servo to starting position
+  myservo.attach(2);
+  myservo.write(servoStartPosition);
+  servoAvailable = false;
+  servoGracePeriod.reset();
+
+  //more setup
+  givingWater = false;
 
 }
 
@@ -83,12 +100,59 @@ void loop() {
   //update the sensors
   updateAllSensors();
 
-  //update the oled (not forced)
+  //Servo must finishes its startup movement before coming available
+  if(servoGracePeriod.triggered()){
+    servoAvailable = true;
+    myservo.detach();   
+  }
+
+  //if in automatic AND the soil is dry AND no command has been issued yet AND servo is available
+  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && servoAvailable){
+    setupWaterGiving();
+  }
+
+  if(givingWater){
+    maintainGivingWater();
+  }
+
+  //update the oled according to oled refresh rate
   updateOLED(false);
+
 }
 
 
+//if in automatic mode, change to manual
+//otherwise change to automatic mode
+void changeMode(){
+  if(automaticMode){
+    //change to manual ->
+    //turn off rotating menu timers
+    changeMenuInterval.stop();
+    automaticMode = false;
+  } 
+  else{
+    //change to automatic->
+    //turn on rotating menu timers
+    changeMenuInterval.start();
+    automaticMode = true;
+  }
+}
 
+
+//prepares the system to give water
+void setupWaterGiving(){
+  //setup servo
+  myservo.attach(2);
+  myservo.write(servoWateringPosition);
+
+}
+
+void maintainGivingWater(){
+  if(myservo.read() == )
+
+}
+
+//sets default font (size) for oled to use
 void setOLEDconfig(){  
   display.clearDisplay();
   display.setTextSize(1);      // Normal 1:1 pixel scale
