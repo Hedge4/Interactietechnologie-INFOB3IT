@@ -34,27 +34,29 @@ int menuState;
 bool automaticMode = true;
 
 //timers
-BlockNot ldrInterval(100);            //interval at which light gets checked 
-BlockNot moistInterval(1000);         //interval at which moisture sensor gets checked, should not be lower than ldr
-int moistReadBuffer = 150;            //can only get data after at least 100ms after turning on
-BlockNot bmpInterval(3000);           //interval at which pressure and temperature gets checked
-BlockNot oledRefreshRate(2000);       //interval at which oled is updated to account for new sensor readings
-BlockNot changeMenuInterval(5000);    //interval at which a new menu screen is shown int automatic mode
+int moistIntervalLong = 5000;                       //normal moisture interval
+int moistIntervalShort = 500;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
+int moistReadBuffer = 150;                          //can only get data after at least 100ms after turning on
+BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
+BlockNot ldrInterval(100);                          //interval at which light gets checked 
+BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
+BlockNot oledRefreshRate(2000);                     //interval at which oled is updated to account for new sensor readings
+BlockNot changeMenuInterval(5000);                  //interval at which a new menu screen is shown int automatic mode
 
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
-bool givingWater;
+bool givingWater;             //indicator that machine is in water giving state
+
 
 //servo definition
-Arm myArm(0,180);
-//servo vars
-BlockNot servoGracePeriod(2000);        //give servo some time at start of program to move to its starting position
-BlockNot holdAtWateringPosition(5000);   //hold servo at watering position for this much time
-bool servoAvailable;                    //if true, servo is currently NOT performing movement and can be written to
-bool servoAtWateringPosition;           //
 int servoStartPosition = 0;             //servo returns to starting position at start of program
 int servoWateringPosition = 180;        //position servo should be in to get water flowing
-bool dispensing;                        //if true, servo currently moving towards watering position. False -> moving towards startposition
+Arm myArm(servoStartPosition, servoWateringPosition);
+//servo vars
+BlockNot holdAtWateringPosition(5000);    //hold servo at watering position for this much time
+BlockNot afterWaterGracePeriod(5000);     //after giving water, set a grace period of x seconds where plant can not be given water again
+bool dispensing;                          //if true, servo currently moving towards watering position. False -> moving towards startposition
+
 
 
 void setup() {
@@ -89,18 +91,18 @@ void setup() {
 
 }
 
-
-
 void loop() {
-  //Serial.println(myArm.available);
-  //Serial.println(myArm.pos);
-  //Serial.println(givingWater);
-  //Serial.println
   //update the sensors
   updateAllSensors();
 
   //update servo
   myArm.update();
+
+  //reset moistInterval if gracePeriod triggered
+  if(afterWaterGracePeriod.firstTrigger()   //should be firstTrigger since in waterLoop gracePeriod trigger is also checked 
+    && moistInterval.getDuration() == moistIntervalShort){ 
+    moistInterval.setDuration(moistIntervalLong);
+  }
 
   //perform water stuff
   waterLoop();
@@ -112,8 +114,14 @@ void loop() {
 
 //handle water dispenser flow
 void waterLoop(){
-  //if in automatic AND the soil is dry AND no command has been issued yet AND servo is available
-  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && myArm.available){
+
+  //bring machine to watergiving state
+  if(   automaticMode                         // automatic indicator
+    &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
+    && !givingWater                           // indicator that machine is not in water-giving state yet
+    && myArm.available                        // indicator that servo can be used
+    && afterWaterGracePeriod.triggered()      // dont soil plants too fast after last soiling
+    ){
     //prepare to give water
     givingWater = true;
     dispensing = true;  //currently moving towards watering position
@@ -124,15 +132,17 @@ void waterLoop(){
     //also stop timer so it returns false when asked for triggers
     holdAtWateringPosition.stop();
 
+    //stop triggers for grace period
+    afterWaterGracePeriod.stop();
 
     Serial.println("1. MOVING TO WATERPOS");
   }
 
   if(givingWater){
     //first wait untill servo reaches dispensing position
-    //then wait a bit
     if(myArm.available && dispensing && holdAtWateringPosition.isStopped())
     {
+      //then wait a bit
       Serial.println("2. REACHED WATERPOS");
       holdAtWateringPosition.start(true); //starts and resets the timer
     }  
@@ -141,13 +151,17 @@ void waterLoop(){
     if(holdAtWateringPosition.triggered() && dispensing){
       Serial.println("3. MOVING TO STARTPOS");
       myArm.moveToStart();
-      dispensing = false;
+      dispensing = false;  //currently moving towards start position
     }
 
     //if returned to original position, mark watering plant as completed
     if(myArm.available && !dispensing){
       Serial.println("4. WATERING COMPLETED");
       givingWater = false;
+      //start grace period with reset timer
+      afterWaterGracePeriod.start(true);  
+      //shorten interval of moistsensor during grace period
+      moistInterval.setDuration(moistIntervalShort);
     }
   }
 }
