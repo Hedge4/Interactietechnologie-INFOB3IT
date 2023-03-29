@@ -37,20 +37,23 @@ extern int menuState;
 
 
 //servo class
+//TODO: MOVE TO BETTER POSITION
 class Arm {
   Servo myservo;                              //servo reference
   int movingTowards;                          //position servo is currently moving towards
   void setupArm();                            //when booting up move servo to start position
-  int pos;                                    //current position of servo
   int startPos;                               //neutral position of servo
   int waterPos;                               //position where water is flowing
   public:
+    int pos;                                    //current position of servo
     bool available;                           //determines if servo can be called or not
     BlockNot moveDelay;                       //small delay between movements
     Arm(int startPosition, int endPosition);  //constructor
     void moveArm(int position);               //issue move commands to servo
     void update();                            //handles slow movement of servo
     void toggleArm(bool t);                   //if true, attaches arm. if false, detach arm
+    void moveToStart();
+    void moveToWatering();
 };
 
 

@@ -14,10 +14,6 @@ Adafruit_BMP280 bmp;
 #define SCREEN_ADDRESS 0x3C 
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-//servo definitions
-Servo myservo;
-//Arm armpie;
-
 
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
@@ -49,6 +45,8 @@ BlockNot changeMenuInterval(5000);    //interval at which a new menu screen is s
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;
 
+//servo definition
+Arm myArm(0,180);
 //servo vars
 BlockNot servoGracePeriod(2000);        //give servo some time at start of program to move to its starting position
 BlockNot holdAtWateringPosition(5000);   //hold servo at watering position for this much time
@@ -86,86 +84,74 @@ void setup() {
   menuState = 0;
   updateOLED(true);
 
-  //bring servo to starting position
-  myservo.attach(2);
-  myservo.write(servoStartPosition);
-  servoAvailable = false;
-  servoGracePeriod.reset(true);
-  dispensing = false;
-  givingWater = false;
+  //move arm to start position
+  myArm.moveToStart();
 
 }
 
 
 
 void loop() {
-
+  //Serial.println(myArm.available);
+  //Serial.println(myArm.pos);
+  //Serial.println(givingWater);
+  //Serial.println
   //update the sensors
   updateAllSensors();
 
+  //update servo
+  myArm.update();
+
+  //perform water stuff
+  waterLoop();
 
   //update the oled according to oled refresh rate
   updateOLED(false);
 
 }
 
-
-
 //handle water dispenser flow
 void waterLoop(){
-  delay(2000);
   //if in automatic AND the soil is dry AND no command has been issued yet AND servo is available
-  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && servoAvailable){
+  if(automaticMode && moistLevel < moistLevelThreshold && !givingWater && myArm.available){
     //prepare to give water
     givingWater = true;
     dispensing = true;  //currently moving towards watering position
-    //setup servo
-    myservo.attach(2);
-    activateServo(servoWateringPosition); //move servo to position, disable other calls
 
+    //move towards watering position
+    myArm.moveToWatering();
+    
     //also stop timer so it returns false when asked for triggers
-    holdAtWateringPosition.reset();
     holdAtWateringPosition.stop();
 
-    Serial.println("MOVING TO WATERPOS");
+
+    Serial.println("1. MOVING TO WATERPOS");
   }
 
   if(givingWater){
     //first wait untill servo reaches dispensing position
     //then wait a bit
-    if(servoAvailable && dispensing && holdAtWateringPosition.isStopped())
+    if(myArm.available && dispensing && holdAtWateringPosition.isStopped())
     {
-      Serial.println("REACHED WATERPOS");
-      holdAtWateringPosition.start(); //starts and resets the timer
+      Serial.println("2. REACHED WATERPOS");
+      holdAtWateringPosition.start(true); //starts and resets the timer
     }  
 
     //after waiting a bit, return to original position
     if(holdAtWateringPosition.triggered() && dispensing){
-      Serial.println("MOVING TO STARTPOS");
-      activateServo(servoStartPosition); //move servo to position, disable other calls
+      Serial.println("3. MOVING TO STARTPOS");
+      myArm.moveToStart();
       dispensing = false;
     }
 
     //if returned to original position, mark watering plant as completed
-    if(servoAvailable && !dispensing){
-      Serial.println("WATERING COMPLETED");
+    if(myArm.available && !dispensing){
+      Serial.println("4. WATERING COMPLETED");
       givingWater = false;
     }
   }
 }
 
-
-
-
-void activateServo(int position){
-  //move servo to position
-  myservo.write(position);
-  //start grace timer
-  servoGracePeriod.reset(true);
-  //make servo unavailable for calls
-  servoAvailable = false;
-
-}
 
 //if in automatic mode, change to manual
 //otherwise change to automatic mode
@@ -239,6 +225,13 @@ void Arm::toggleArm(bool t){
   }  
 }
 
+void Arm::moveToStart(){
+  moveArm(startPos);
+}
+
+void Arm::moveToWatering(){
+  moveArm(waterPos);  
+}
 
 
 
