@@ -234,6 +234,10 @@ void Arm::update(){
     }
     else{
       available = true;
+      //detach servo
+      if(myservo.attached()){
+        toggleArm(false);
+      }
     }
   }
 }
@@ -242,6 +246,8 @@ void Arm::moveArm(int position){
   //only allow if servo is available
   if (!available) { return; }
   movingTowards = position;
+  //attach servo to prepare for movement
+  toggleArm(true);
   available = false;
 }
 
