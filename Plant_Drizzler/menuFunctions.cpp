@@ -22,6 +22,7 @@ void updateOLED(bool forced) {
         break;
       case 1:
         drawStartScreen();
+        break;
       case 2:
         drawMoisture();
         break;
@@ -233,14 +234,15 @@ void drawWateringScreen(){
 
 }
 
-
 //turns on or off the automatic changing menu screens
 void toggleCarousel(bool mode){
   if(mode){
+    Serial.println("START(");
     changeMenuInterval.start(true);
   }
   else{
-  changeMenuInterval.stop();    
+    Serial.println("stop(");
+    changeMenuInterval.stop();    
   }
 
 

@@ -90,7 +90,7 @@ void setup() {
 
   //go to menu screen
   menuState = 1;
-  updateOLED(true);
+  changeMenuState(menuState);
 
   //move arm to start position
   myArm.moveToStart();
@@ -98,10 +98,11 @@ void setup() {
   //initialise lastwatered
   lastWatered = millis();
 
-  //setup automaticmode
-  toggleAutomatic(true);
   //setup button callback
-  toggleButton.setCallback(onButtonChange);  
+  toggleButton.setCallback(onButtonChange);
+
+  //setup automaticmode
+  toggleAutomatic(true);  
 
 }
 
@@ -118,7 +119,7 @@ void loop() {
   //reset moistInterval if gracePeriod triggered
   if(afterWaterGracePeriod.firstTrigger()   //should be firstTrigger since in waterLoop gracePeriod trigger is also checked 
     && moistInterval.getDuration() == moistIntervalShort){ 
-    Serial.println("5. TURN OFF MOIST");
+    //Serial.println("5. TURN OFF MOIST");
     moistInterval.setDuration(moistIntervalLong);
   }
 
@@ -157,7 +158,7 @@ void waterLoop(){
     //stop triggers for grace period
     afterWaterGracePeriod.stop();
 
-    Serial.println("1. MOVING TO WATERPOS");
+    //Serial.println("1. MOVING TO WATERPOS");
   }
 
   if(givingWater){
@@ -165,20 +166,20 @@ void waterLoop(){
     if(myArm.available && dispensing && holdAtWateringPosition.isStopped())
     {
       //then wait a bit
-      Serial.println("2. REACHED WATERPOS");
+      //Serial.println("2. REACHED WATERPOS");
       holdAtWateringPosition.start(true); //starts and resets the timer
     }  
 
     //after waiting a bit, return to original position
     if(holdAtWateringPosition.triggered() && dispensing){
-      Serial.println("3. MOVING TO STARTPOS");
+      //Serial.println("3. MOVING TO STARTPOS");
       myArm.moveToStart();
       dispensing = false;  //currently moving towards start position
     }
 
     //if returned to original position, mark watering plant as completed
     if(myArm.available && !dispensing){
-      Serial.println("4. WATERING COMPLETED");
+      //Serial.println("4. WATERING COMPLETED");
       //remember time this happened
       lastWatered = millis();
       givingWater = false;
@@ -186,9 +187,11 @@ void waterLoop(){
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
-      //turn back to normal rotation
-      toggleCarousel(true);
-      changeMenuState(2);
+      //turn back to normal rotation if in automatic
+      if(automaticMode){
+        toggleCarousel(true);
+        changeMenuState(2);    
+      }
     }
   }
 }
@@ -202,15 +205,20 @@ void toggleAutomatic(bool mode){
     //turn on rotating menu timers
     toggleCarousel(true);
     automaticMode = true;
-    //change light
-    digitalWrite(ledPin, HIGH);
+    //reset menu to start screen
+    changeMenuState(1);
+    //change light (reversed apparantly?)
+    digitalWrite(ledPin, LOW);  
   } 
   else{
     //change to manual->
     //turn off rotating menu timers
     toggleCarousel(false);
     automaticMode = false;
-    digitalWrite(ledPin, LOW);
+    //reset menu to start screen
+    changeMenuState(1);
+    //change light
+    digitalWrite(ledPin, HIGH);
   }
 }
 
