@@ -9,5 +9,7 @@ void updateAllSensors();
 void checkAmuxSensors();
 void checkBmpSensors();
 
+int calcAverage(int arr[]);
+
 
 #endif  /*SENSORFUNCTIONS_H*/

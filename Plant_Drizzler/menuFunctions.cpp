@@ -237,11 +237,9 @@ void drawWateringScreen(){
 //turns on or off the automatic changing menu screens
 void toggleCarousel(bool mode){
   if(mode){
-    Serial.println("START(");
     changeMenuInterval.start(true);
   }
   else{
-    Serial.println("stop(");
     changeMenuInterval.stop();    
   }
 
