@@ -7,6 +7,7 @@
 #include <Adafruit_BMP280.h>
 #include <Servo.h>
 #include <BlockNot.h> 
+#include <ButtonDebounce.h>
 
 #include "sensorFunctions.h"
 #include "menuFunctions.h"
@@ -35,7 +36,6 @@ extern BlockNot oledRefreshRate;
 extern BlockNot changeMenuInterval;
 
 extern int menuState;
-
 
 //servo class
 //TODO: MOVE TO BETTER POSITION

@@ -19,6 +19,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 int selPin = D6;  //write LOW for LDR, HIGH for moist
 int aPin = A0;
 int flashPin = D3;
+int ledPin = D0;
 
 //reading vars
 int ldrReading;
@@ -32,7 +33,7 @@ int moistLevel;     //0..3 -> same as lightLevel
 int menuState;
 
 //determine if device is in automatic mode or not
-bool automaticMode = true;
+bool automaticMode;
 
 //timers
 int moistIntervalLong = 5000;                       //normal moisture interval
@@ -59,7 +60,9 @@ BlockNot holdAtWateringPosition(5000);    //hold servo at watering position for 
 BlockNot afterWaterGracePeriod(5000);     //after giving water, set a grace period of x seconds where plant can not be given water again
 bool dispensing;                          //if true, servo currently moving towards watering position. False -> moving towards startposition
 
-
+//button setup, set debounce time to 50 ms
+ButtonDebounce toggleButton(flashPin, 50);
+BlockNot buttonCooldown(1000);                //wait 1 second before accepting new inputs of button
 
 void setup() {
   Serial.begin(9600);
@@ -83,6 +86,7 @@ void setup() {
   
   //pin setup
   pinMode(selPin, OUTPUT);  
+  pinMode(ledPin, OUTPUT);
 
   //go to menu screen
   menuState = 1;
@@ -94,9 +98,17 @@ void setup() {
   //initialise lastwatered
   lastWatered = millis();
 
+  //setup automaticmode
+  toggleAutomatic(true);
+  //setup button callback
+  toggleButton.setCallback(onButtonChange);  
+
 }
 
 void loop() {
+  //check for button updates and change accordingly in callback function
+  toggleButton.update();
+
   //update the sensors
   updateAllSensors();
 
@@ -182,20 +194,23 @@ void waterLoop(){
 }
 
 
-//if in automatic mode, change to manual
+//turn on or off automatic (if not automatic, turn on manual)
 //otherwise change to automatic mode
-void changeMode(){
-  if(automaticMode){
-    //change to manual ->
-    //turn off rotating menu timers
-    toggleCarousel(false);
-    automaticMode = false;
-  } 
-  else{
-    //change to automatic->
+void toggleAutomatic(bool mode){
+  if(mode){
+    //change to automatic ->
     //turn on rotating menu timers
     toggleCarousel(true);
     automaticMode = true;
+    //change light
+    digitalWrite(ledPin, HIGH);
+  } 
+  else{
+    //change to manual->
+    //turn off rotating menu timers
+    toggleCarousel(false);
+    automaticMode = false;
+    digitalWrite(ledPin, LOW);
   }
 }
 
@@ -208,7 +223,16 @@ void setOLEDconfig(){
   display.cp437(true);         // Use full 256 char 'Code Page 437' font
 }
 
+void onButtonChange(const int state){
+  if(state == HIGH && automaticMode && buttonCooldown.triggered()){
+    //change to manual if in automatic and button is pressed
+    toggleAutomatic(false);
+  }
+  if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
+    toggleAutomatic(true);
+  }
 
+}
 
 
 
