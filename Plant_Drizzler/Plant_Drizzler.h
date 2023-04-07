@@ -21,6 +21,7 @@ extern float tempReading;
 extern float pressureReading;
 extern int lightLevel;
 extern int moistLevel;
+extern unsigned long lastWatered;
 
 extern int selPin;
 extern int aPin;

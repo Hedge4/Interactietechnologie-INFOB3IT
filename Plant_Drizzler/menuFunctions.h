@@ -12,6 +12,6 @@ void drawStartScreen();
 void drawPressure();
 void drawMoisture();
 void drawLighting();
-
+void drawTime();
 
 #endif /*MENUFUNCTIONS_H*/

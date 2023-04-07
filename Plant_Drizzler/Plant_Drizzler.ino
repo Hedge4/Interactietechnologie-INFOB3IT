@@ -18,6 +18,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
 int aPin = A0;
+int flashPin = D3;
 
 //reading vars
 int ldrReading;
@@ -46,6 +47,7 @@ BlockNot changeMenuInterval(5000);                  //interval at which a new me
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;             //indicator that machine is in water giving state
+unsigned long lastWatered;
 
 
 //servo definition
@@ -89,6 +91,9 @@ void setup() {
   //move arm to start position
   myArm.moveToStart();
 
+  //initialise lastwatered
+  lastWatered = millis();
+
 }
 
 void loop() {
@@ -101,6 +106,7 @@ void loop() {
   //reset moistInterval if gracePeriod triggered
   if(afterWaterGracePeriod.firstTrigger()   //should be firstTrigger since in waterLoop gracePeriod trigger is also checked 
     && moistInterval.getDuration() == moistIntervalShort){ 
+    Serial.println("5. TURN OFF MOIST");
     moistInterval.setDuration(moistIntervalLong);
   }
 
@@ -157,11 +163,14 @@ void waterLoop(){
     //if returned to original position, mark watering plant as completed
     if(myArm.available && !dispensing){
       Serial.println("4. WATERING COMPLETED");
+      //remember time this happened
+      lastWatered = millis();
       givingWater = false;
       //start grace period with reset timer
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
+
     }
   }
 }

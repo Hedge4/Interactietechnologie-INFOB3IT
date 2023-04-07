@@ -32,12 +32,15 @@ void updateOLED(bool forced) {
       case 4:
         drawPressure();
         break;
+      case 5:
+        drawTime();
+        break;
     }
   }
   else{
     if(changeMenuInterval.triggered()){
       int nextMenu = menuState + 1; 
-      changeMenuState((nextMenu < 5) ? nextMenu : 1);
+      changeMenuState((nextMenu < 6) ? nextMenu : 1);
       oledRefreshRate.reset(); 
     }
   }
@@ -187,4 +190,27 @@ void drawLighting(){
   //refresh display
   display.display();
 }
+
+void drawTime(){
+
+  unsigned long minutesPassed = lastWatered / 1000 / 60; 
+
+  //prep display
+  display.clearDisplay();
+  display.setCursor(0, 0);     // Start at top-left corner
+
+  //print info
+  display.println("   ---------------   ");
+  display.println("   |  Treatment  |   ");
+  display.println("   ---------------   ");
+  display.println("");
+  display.println("   Last given water  ");
+  display.println("");
+  display.print("    "); display.print(minutesPassed); display.println(" minutes ago");
+
+  //refresh display
+  display.display();
+
+}
+
 
