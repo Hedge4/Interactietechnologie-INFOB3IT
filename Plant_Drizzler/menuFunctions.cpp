@@ -18,21 +18,23 @@ void updateOLED(bool forced) {
   if(oledRefreshRate.triggered() || forced){
     switch(menuState){
       case 0:
-        drawStartScreen();
+        drawWateringScreen();
         break;
       case 1:
+        drawStartScreen();
+      case 2:
         drawMoisture();
         break;
-      case 2:
+      case 3:
         drawTemperature();
         break;
-      case 3:
+      case 4:
         drawLighting();
         break;
-      case 4:
+      case 5:
         drawPressure();
         break;
-      case 5:
+      case 6:
         drawTime();
         break;
     }
@@ -40,7 +42,7 @@ void updateOLED(bool forced) {
   else{
     if(changeMenuInterval.triggered()){
       int nextMenu = menuState + 1; 
-      changeMenuState((nextMenu < 6) ? nextMenu : 1);
+      changeMenuState((nextMenu < 7) ? nextMenu : 2);
       oledRefreshRate.reset(); 
     }
   }
@@ -53,8 +55,6 @@ void changeMenuState(int newState){
     updateOLED(true);
   }
 }
-
-
 
 void drawStartScreen(){
 
@@ -213,4 +213,37 @@ void drawTime(){
 
 }
 
+void drawWateringScreen(){
+
+  //credits for the art to https://ascii.co.uk/art/wateringcan
+
+  //prep display
+  display.clearDisplay();
+  display.setCursor(0, 0);     // Start at top-left corner
+
+  display.println(R"(            ______)");
+  display.println(R"( _        ,',----.`.)");
+  display.println(R"('.`-.  .-' '----. ||)");
+  display.println(R"(   `.`-'--------| ;;)");
+  display.println(R"(     `.|--------|//)");
+  display.println(R"(       \         /)");
+  display.println(R"(        '--------')");
+
+  display.display();
+
+}
+
+
+//turns on or off the automatic changing menu screens
+void toggleCarousel(bool mode){
+  if(mode){
+    changeMenuInterval.start(true);
+  }
+  else{
+  changeMenuInterval.stop();    
+  }
+
+
+
+}
 

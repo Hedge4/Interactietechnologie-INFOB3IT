@@ -85,7 +85,7 @@ void setup() {
   pinMode(selPin, OUTPUT);  
 
   //go to menu screen
-  menuState = 0;
+  menuState = 1;
   updateOLED(true);
 
   //move arm to start position
@@ -132,6 +132,10 @@ void waterLoop(){
     givingWater = true;
     dispensing = true;  //currently moving towards watering position
 
+    //turn off menu carousel, set  menu screen to watering can
+    toggleCarousel(false);
+    changeMenuState(0);
+
     //move towards watering position
     myArm.moveToWatering();
     
@@ -170,7 +174,9 @@ void waterLoop(){
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
-
+      //turn back to normal rotation
+      toggleCarousel(true);
+      changeMenuState(2);
     }
   }
 }
@@ -182,13 +188,13 @@ void changeMode(){
   if(automaticMode){
     //change to manual ->
     //turn off rotating menu timers
-    changeMenuInterval.stop();
+    toggleCarousel(false);
     automaticMode = false;
   } 
   else{
     //change to automatic->
     //turn on rotating menu timers
-    changeMenuInterval.start();
+    toggleCarousel(true);
     automaticMode = true;
   }
 }

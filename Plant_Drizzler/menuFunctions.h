@@ -13,5 +13,7 @@ void drawPressure();
 void drawMoisture();
 void drawLighting();
 void drawTime();
+void drawWateringScreen();
+void toggleCarousel(bool mode);
 
 #endif /*MENUFUNCTIONS_H*/
