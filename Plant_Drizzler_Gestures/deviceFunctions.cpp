@@ -57,7 +57,7 @@ void changeDeviceState(int newState) {
 
 void deviceLoop(unsigned long curTime) {
   // ! nothing here yet
-  
+
   switch (deviceState) {
     case 0:
       break;

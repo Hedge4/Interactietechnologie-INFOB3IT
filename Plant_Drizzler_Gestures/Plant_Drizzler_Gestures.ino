@@ -3,16 +3,15 @@
 
 int waterButtonPin = 11;
 int refreshButtonPin = 12;
-int ledPin = 13;
 bool prevWaterState = LOW;
 bool prevRefreshState = LOW;
 
+// interval at which buttons get checked
+BlockNot waterButtonInterval(50);
+BlockNot refreshButtonInterval(50);
+
 
 void setup() {
-  pinMode(waterButtonPin, INPUT);
-  pinMode(refreshButtonPin, INPUT);
-  pinMode(ledPin, OUTPUT);
-
   // for logging purposes
   Serial.begin(9600);
 }
@@ -27,26 +26,24 @@ void loop() {
 
   bool waterButtonState = digitalRead(waterButtonPin);
   bool refreshButtonState = digitalRead(refreshButtonPin);
-  
-  if (waterButtonState != prevWaterState) {
+
+  if (waterButtonState != prevWaterState && waterButtonInterval.triggered()) {
     prevWaterState = waterButtonState;
-    digitalWrite(ledPin, !waterButtonState || !refreshButtonState);
+    digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
 
     if (!waterButtonState) {
-      Serial.println("Water command sent!");
-
-      // ! send MQTT command
+      // communicate the command to node-red through the serial connection
+      Serial.println("water");
     }
   }
 
-  if (refreshButtonState != prevRefreshState) {
+  if (refreshButtonState != prevRefreshState && refreshButtonInterval.triggered()) {
     prevRefreshState = refreshButtonState;
-    digitalWrite(ledPin, !refreshButtonState || !waterButtonState);
+    digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
 
     if (!refreshButtonState) {
-      Serial.println("Read values command sent!");
-
-      // ! send MQTT command
+      // communicate the command to node-red through the serial connection
+      Serial.println("refresh");
     }
   }
 }
