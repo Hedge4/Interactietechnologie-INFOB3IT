@@ -27,19 +27,63 @@ void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, 
 }
 
 void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  String msgMoist;
+  switch(moistLevel){
+    case 0:
+      msgMoist = "Very Dry";
+      break;
+    case 1:
+      msgMoist = "Moderately Dry";
+      break;
+    case 2:
+      msgMoist = "Moderately Wet";
+      break;
+    case 3:
+      msgMoist = "Very Wet";
+      break;
+  }
+  String msgLight;
+  switch(lightLevel){
+    case 0:
+      msgLight = "Very Dark";
+      break;
+    case 1:
+      msgLight = "Moderately Dark";
+      break;
+    case 2:
+      msgLight = "Moderately Light";
+      break;
+    case 3:
+      msgLight = "Very Light";
+      break;
+  }
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(0 + x, 11 + y, "To Be Implemented");
+  display->drawString(0 + x, 11 + y, "Moisture");
+  display->drawString(0 + x, 21 + y, msgMoist);
+  display->drawString(0 + x, 31 + y, "Lighting");
+  display->drawString(0 + x, 41 + y, msgLight);
 }
 void drawBmpFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  //String msgTemp = String(tempReading);
+  String msgTemp = String(tempReading) + String(" *C");
+  String msgPressure = String(pressureReading / 100000) + String(" bar");
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(0 + x, 11 + y, "To Be Implemented");
+  display->drawString(0 + x, 11 + y, "Temperature");
+  display->drawString(0 + x, 21 + y, msgTemp);
+  display->drawString(0 + x, 31 + y, "Pressure");
+  display->drawString(0 + x, 41 + y, msgPressure);
 }
 void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  //String msgTemp = String(tempReading);
+  String msgLastWater = String(lastWatered) + String(" minutes");
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(0 + x, 11 + y, "To Be Implemented");
+  display->drawString(0 + x, 11 + y, "Time since last watering");
+  display->drawString(0 + x, 21 + y, msgLastWater);
+  display->drawString(0 + x, 31 + y, "Randominfo");
+  display->drawString(0 + x, 41 + y, "to be discovered");
 }
 
 
@@ -55,7 +99,6 @@ void oledSetup(){
   ui.setFrameAnimation(SLIDE_LEFT);
   ui.setFrames(frames, frameCount);
   ui.setOverlays(overlays, overlaysCount);
-  ui.disableAutoTransition();
   ui.setTimePerTransition(1000);
   ui.init();
   display.flipScreenVertically();
