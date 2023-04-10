@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <BlockNot.h>
-#include "deviceFunctions.h"
+#include "gestureDetection.h"
 
 
 #endif /*PLANT_DRIZZLER_GESTURES_H*/

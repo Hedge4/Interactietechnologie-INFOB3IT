@@ -1,4 +1,4 @@
-#include "deviceFunctions.h"
+#include "gestureDetection.h"
 
 
 /////////////////////////
