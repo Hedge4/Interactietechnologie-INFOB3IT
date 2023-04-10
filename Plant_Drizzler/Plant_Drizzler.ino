@@ -273,10 +273,7 @@ void onButtonChange(const int state){
     forceRetrieveSensors = true; 
     Serial.println("HIT");
   }
-
 }
-
-
 
 Arm::Arm(int startPosition, int endPosition){
   myservo.attach(2);
