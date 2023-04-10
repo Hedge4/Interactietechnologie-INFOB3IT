@@ -48,7 +48,8 @@ BlockNot changeMenuInterval(5000);                  //interval at which a new me
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;             //indicator that machine is in water giving state
-unsigned long lastWatered;
+unsigned long lastWatered;    //remember when last given water
+bool forceGiveWater = false;  //for manual mode, gives signal that water must be given in this cycle
 
 
 //servo definition
@@ -98,7 +99,7 @@ void setup() {
   //initialise lastwatered
   lastWatered = millis();
 
-  //setup button callback
+  //setup function that happens when buttonstate changes
   toggleButton.setCallback(onButtonChange);
 
   //setup automaticmode
@@ -107,7 +108,7 @@ void setup() {
 }
 
 void loop() {
-  //check for button updates and change accordingly in callback function
+    //check for button updates and change accordingly in callback function
   toggleButton.update();
 
   //update the sensors
@@ -135,11 +136,16 @@ void loop() {
 void waterLoop(){
 
   //bring machine to watergiving state
-  if(   automaticMode                         // automatic indicator
+  if(   (automaticMode                         // automatic indicator
     &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
     && !givingWater                           // indicator that machine is not in water-giving state yet
     && myArm.available                        // indicator that servo can be used
     && afterWaterGracePeriod.triggered()      // dont soil plants too fast after last soiling
+    ) ||
+      (!automaticMode                         //if in manual mode, only give water if forced
+    && forceGiveWater
+    && !givingWater                           //only issue water commands while no watering is in process
+    )
     ){
     //prepare to give water
     givingWater = true;
@@ -192,6 +198,10 @@ void waterLoop(){
         toggleCarousel(true);
         changeMenuState(2);    
       }
+      //if in manual, turn of forced flag
+      else{
+        forceGiveWater = false;
+      }
     }
   }
 }
@@ -237,7 +247,10 @@ void onButtonChange(const int state){
     toggleAutomatic(false);
   }
   if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
-    toggleAutomatic(true);
+  //toggleAutomatic(true);
+    /////////////////TEMPORARY CODE/////////////////
+    forceGiveWater = true; 
+    Serial.println("HIT");
   }
 
 }
