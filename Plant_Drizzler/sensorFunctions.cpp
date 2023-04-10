@@ -8,7 +8,7 @@ void updateAllSensors(){
 
 //get average of moisture readings to use as official reading
 int moistIndex = 0;
-int moistReadings [15];
+int moistReadings [5];
 void checkAmuxSensors(){
   //read ldr at interval
   if(ldrInterval.triggered()){
