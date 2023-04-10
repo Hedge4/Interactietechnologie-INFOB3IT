@@ -37,7 +37,7 @@ bool automaticMode;
 
 //timers
 int moistIntervalLong = 5000;                       //normal moisture interval
-int moistIntervalShort = 500;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
+int moistIntervalShort = 300;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
 int moistReadBuffer = 150;                          //can only get data after at least 100ms after turning on
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
@@ -48,8 +48,13 @@ BlockNot changeMenuInterval(5000);                  //interval at which a new me
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;             //indicator that machine is in water giving state
-unsigned long lastWatered;
+unsigned long lastWatered;    //remember when last given water
+bool forceGiveWater;  //for manual mode, gives signal that water must be given in this cycle
 
+//retrieve sensor command vars
+BlockNot forceSensorsInterval(500);  //short interval after which command is displayed in which moist sensor data can be refreshed
+BlockNot moistDebouncing(50);     //short interval so moisture will not be read each cycle
+bool forceRetrieveSensors;            //force flag for command
 
 //servo definition
 int servoStartPosition = 0;             //servo returns to starting position at start of program
@@ -98,11 +103,16 @@ void setup() {
   //initialise lastwatered
   lastWatered = millis();
 
-  //setup button callback
+  //setup function that happens when buttonstate changes
   toggleButton.setCallback(onButtonChange);
 
   //setup automaticmode
   toggleAutomatic(true);  
+
+  //setup commands
+  forceGiveWater = false;
+  forceRetrieveSensors = false;
+  forceSensorsInterval.stop();
 
 }
 
@@ -110,8 +120,20 @@ void loop() {
   //check for button updates and change accordingly in callback function
   toggleButton.update();
 
-  //update the sensors
-  updateAllSensors();
+  //update the sensors, except when retrieve sensor command is issued, then run separate logic
+  if(!forceRetrieveSensors){
+    updateAllSensors();
+  }
+  else{
+    if(forceUpdateSensors()){
+      //retrieval happened, print to Serial and turn of force flag
+      Serial.print("Moist is "); Serial.println(moistReading);
+      Serial.print("Light is "); Serial.println(ldrReading);
+      Serial.print("Temp is "); Serial.println(tempReading);
+      Serial.print("Press is "); Serial.println(pressureReading);
+      forceRetrieveSensors = false;
+    }
+  }
 
   //update servo
   myArm.update();
@@ -135,11 +157,16 @@ void loop() {
 void waterLoop(){
 
   //bring machine to watergiving state
-  if(   automaticMode                         // automatic indicator
+  if(   (automaticMode                         // automatic indicator
     &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
     && !givingWater                           // indicator that machine is not in water-giving state yet
     && myArm.available                        // indicator that servo can be used
     && afterWaterGracePeriod.triggered()      // dont soil plants too fast after last soiling
+    ) ||
+      (!automaticMode                         //if in manual mode, only give water if forced
+    && forceGiveWater
+    && !givingWater                           //only issue water commands while no watering is in process
+    )
     ){
     //prepare to give water
     givingWater = true;
@@ -192,6 +219,10 @@ void waterLoop(){
         toggleCarousel(true);
         changeMenuState(2);    
       }
+      //if in manual, turn of forced flag
+      else{
+        forceGiveWater = false;
+      }
     }
   }
 }
@@ -237,12 +268,12 @@ void onButtonChange(const int state){
     toggleAutomatic(false);
   }
   if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
-    toggleAutomatic(true);
+  //toggleAutomatic(true);
+    /////////////////TEMPORARY CODE/////////////////
+    forceRetrieveSensors = true; 
+    Serial.println("HIT");
   }
-
 }
-
-
 
 Arm::Arm(int startPosition, int endPosition){
   myservo.attach(2);
