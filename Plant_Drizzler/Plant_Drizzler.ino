@@ -1,19 +1,15 @@
 #include "Plant_Drizzler.h"
 
+//oled definitions
+SSD1306Wire display(0x3c, SDA, SCL);
+OLEDDisplayUi ui     ( &display );
+
 //bmp definitions
 #define BMP_SCK  (13)
 #define BMP_MISO (12)
 #define BMP_MOSI (11)
 #define BMP_CS   (10)
 Adafruit_BMP280 bmp;
-
-//oled definitiions
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
@@ -73,11 +69,7 @@ void setup() {
   Serial.begin(9600);
 
   //OLED setup
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
-  setOLEDconfig();
+  oledSetup();
 
   //bmp setup
   unsigned status;
@@ -253,14 +245,6 @@ void toggleAutomatic(bool mode){
   }
 }
 
-
-//sets default font (size) for oled to use
-void setOLEDconfig(){  
-  display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-}
 
 void onButtonChange(const int state){
   if(state == HIGH && automaticMode && buttonCooldown.triggered()){

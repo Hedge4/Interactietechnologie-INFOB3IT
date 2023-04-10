@@ -1,4 +1,52 @@
 #include "menuFunctions.h"
+#include "images.h"
+
+//, drawAmuxFrame, drawBmpFrame, drawTreatmentFrame
+
+FrameCallback frames[] = { drawStartFrame };
+int frameCount = 4;
+OverlayCallback overlays[] = { watercanOverlay };
+int overlaysCount = 1;
+
+void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_10);
+  display->drawString(0 + x, 11 + y, "Drizzlingggggggggggg");
+  display->drawString(0 + x, 21 + y, "Since 2023");
+  display->drawString(0 + x, 31 + y, "Since 2023");
+  display->drawString(0 + x, 41 + y, "Since 2023");
+
+
+}
+
+void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
+  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setFont(ArialMT_Plain_10);
+  display->drawString(128, 0, "Watering...");
+}
+
+
+//method containing config of screen and ui
+void oledSetup(){
+  ui.setTargetFPS(30);
+  ui.setActiveSymbol(activeSymbol);
+  ui.setInactiveSymbol(inactiveSymbol);
+  ui.setIndicatorPosition(BOTTOM);
+  ui.setIndicatorDirection(LEFT_RIGHT);
+  ui.setFrameAnimation(SLIDE_LEFT);
+  ui.setFrames(frames, frameCount);
+  ui.setOverlays(overlays, overlaysCount);
+  ui.disableAutoTransition();
+  ui.setTimePerTransition(1000);
+  ui.init();
+  display.flipScreenVertically();
+}
+
+
+
+
+
 
 /*  
 0 = Startup screen
@@ -15,36 +63,35 @@ int charLimitWidth = 21;  //can print 21 chars, 22nd char will print on nextln
 //periodically refresh display, will enforce update if forced=true
 //move onto next screen if nothing happened for a while
 void updateOLED(bool forced) {
+  ui.update();
   if(oledRefreshRate.triggered() || forced){
     switch(menuState){
       case 0:
-        drawWateringScreen();
+        ;
         break;
       case 1:
-        drawStartScreen();
+        ;
         break;
       case 2:
-        drawMoisture();
+        ;
         break;
       case 3:
-        drawTemperature();
+        ;
         break;
       case 4:
-        drawLighting();
+        ;
         break;
       case 5:
-        drawPressure();
+        ;
         break;
       case 6:
-        drawTime();
+        ;
         break;
     }
   }
   else{
     if(changeMenuInterval.triggered()){
-      int nextMenu = menuState + 1; 
-      changeMenuState((nextMenu < 7) ? nextMenu : 2);
-      oledRefreshRate.reset(); 
+      ui.nextFrame();
     }
   }
 }
@@ -56,7 +103,7 @@ void changeMenuState(int newState){
     updateOLED(true);
   }
 }
-
+/*
 void drawStartScreen(){
 
   //prep display
@@ -74,7 +121,6 @@ void drawStartScreen(){
   display.display();
 
 }
-
 void drawTemperature(){
 
   //prep display
@@ -92,7 +138,6 @@ void drawTemperature(){
   display.display();
   
 }
-
 void drawPressure(){
   //prep display
   display.clearDisplay();
@@ -108,7 +153,6 @@ void drawPressure(){
   //refresh display
   display.display();
 }
-
 void drawMoisture(){
   //prep message
   String msg;
@@ -150,7 +194,6 @@ void drawMoisture(){
   display.display();
 
 }
-
 void drawLighting(){
   //prep message
   String msg;
@@ -191,7 +234,6 @@ void drawLighting(){
   //refresh display
   display.display();
 }
-
 void drawTime(){
 
   unsigned long minutesPassed = lastWatered / 1000 / 60; 
@@ -213,7 +255,6 @@ void drawTime(){
   display.display();
 
 }
-
 void drawWateringScreen(){
 
   //credits for the art to https://ascii.co.uk/art/wateringcan
@@ -233,14 +274,15 @@ void drawWateringScreen(){
   display.display();
 
 }
+*/
 
 //turns on or off the automatic changing menu screens
 void toggleCarousel(bool mode){
   if(mode){
-    changeMenuInterval.start(true);
+    ui.enableAutoTransition();
   }
   else{
-    changeMenuInterval.stop();    
+    ui.disableAutoTransition();   
   }
 
 
