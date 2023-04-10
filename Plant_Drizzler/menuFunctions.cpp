@@ -17,12 +17,13 @@ void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
 }
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  int mins = millis() / 1000 / 60;
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(0 + x, 11 + y, "Drizzlingggggggggggg");
-  display->drawString(0 + x, 21 + y, "Since 2023");
-  display->drawString(0 + x, 31 + y, "Since 2023");
-  display->drawString(0 + x, 41 + y, "Since 2023");
+  display->drawString(0 + x, 11 + y, "Plant Drizzler 9000");
+  display->drawString(0 + x, 21 + y, "Keeping your plant alive for");
+  display->drawString(0 + x, 31 + y, String(mins));
+  display->drawString(0 + x, 41 + y, "minutes since powering");
 }
 
 void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
@@ -93,7 +94,7 @@ void updateOLED() {
 void changeMenuState(int newState){
   if(menuState != newState){
     menuState = newState;
-    updateOLED(true);
+    updateOLED();
   }
 }
 /*
@@ -269,16 +270,5 @@ void drawWateringScreen(){
 }
 */
 
-//turns on or off the automatic changing menu screens
-void toggleCarousel(bool mode){
-  if(mode){
-    ui.enableAutoTransition();
-  }
-  else{
-    ui.disableAutoTransition();   
-  }
 
-
-
-}
 

@@ -161,10 +161,6 @@ void waterLoop(){
     givingWater = true;
     dispensing = true;  //currently moving towards watering position
 
-    //turn off menu carousel, set  menu screen to watering can
-    toggleCarousel(false);
-    changeMenuState(0);
-
     //move towards watering position
     myArm.moveToWatering();
     
@@ -203,13 +199,8 @@ void waterLoop(){
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
-      //turn back to normal rotation if in automatic
-      if(automaticMode){
-        toggleCarousel(true);
-        changeMenuState(2);    
-      }
       //if in manual, turn of forced flag
-      else{
+      if(!automaticMode){
         forceGiveWater = false;
       }
     }
@@ -222,8 +213,6 @@ void waterLoop(){
 void toggleAutomatic(bool mode){
   if(mode){
     //change to automatic ->
-    //turn on rotating menu timers
-    toggleCarousel(true);
     automaticMode = true;
     //reset menu to start screen
     changeMenuState(1);
@@ -232,8 +221,6 @@ void toggleAutomatic(bool mode){
   } 
   else{
     //change to manual->
-    //turn off rotating menu timers
-    toggleCarousel(false);
     automaticMode = false;
     //reset menu to start screen
     changeMenuState(1);

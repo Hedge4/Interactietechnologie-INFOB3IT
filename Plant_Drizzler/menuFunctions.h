@@ -7,7 +7,7 @@
 
 void oledSetup();
 
-void updateOLED(bool forced);
+void updateOLED();
 void changeMenuState(int newState);
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
