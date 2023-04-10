@@ -82,10 +82,6 @@ void setup() {
   pinMode(selPin, OUTPUT);  
   pinMode(ledPin, OUTPUT);
 
-  //go to menu screen
-  menuState = 1;
-  changeMenuState(menuState);
-
   //move arm to start position
   myArm.moveToStart();
 
@@ -214,16 +210,12 @@ void toggleAutomatic(bool mode){
   if(mode){
     //change to automatic ->
     automaticMode = true;
-    //reset menu to start screen
-    changeMenuState(1);
     //change light (reversed apparantly?)
     digitalWrite(ledPin, LOW);  
   } 
   else{
     //change to manual->
     automaticMode = false;
-    //reset menu to start screen
-    changeMenuState(1);
     //change light
     digitalWrite(ledPin, HIGH);
   }

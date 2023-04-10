@@ -38,8 +38,6 @@ extern BlockNot moistInterval;
 extern BlockNot bmpInterval;
 extern int moistReadBuffer;
 
-extern BlockNot changeMenuInterval;
-
 extern BlockNot forceSensorsInterval;
 extern BlockNot moistDebouncing;
 

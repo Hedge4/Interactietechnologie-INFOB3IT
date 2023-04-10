@@ -8,7 +8,6 @@
 void oledSetup();
 
 void updateOLED();
-void changeMenuState(int newState);
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
@@ -17,16 +16,5 @@ void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t
 
 void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
 
-/*
-void drawTemperature();
-void drawStartScreen();
-void drawPressure();
-void drawMoisture();
-void drawLighting();
-void drawTime();
-void drawWateringScreen();
-*/
-
-void toggleCarousel(bool mode);
 
 #endif /*MENUFUNCTIONS_H*/
