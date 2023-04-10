@@ -38,13 +38,14 @@ extern BlockNot moistInterval;
 extern BlockNot bmpInterval;
 extern int moistReadBuffer;
 
-extern BlockNot oledRefreshRate;
 extern BlockNot changeMenuInterval;
 
 extern BlockNot forceSensorsInterval;
 extern BlockNot moistDebouncing;
 
 extern int menuState;
+
+extern bool givingWater;
 
 //servo class
 //TODO: MOVE TO BETTER POSITION

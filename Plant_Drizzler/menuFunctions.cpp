@@ -1,30 +1,47 @@
 #include "menuFunctions.h"
 #include "images.h"
 
-//, drawAmuxFrame, drawBmpFrame, drawTreatmentFrame
+//
 
-FrameCallback frames[] = { drawStartFrame };
+FrameCallback frames[] = { drawStartFrame, drawAmuxFrame, drawBmpFrame, drawTreatmentFrame };
 int frameCount = 4;
 OverlayCallback overlays[] = { watercanOverlay };
 int overlaysCount = 1;
 
-void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
+  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+  display->setFont(ArialMT_Plain_10);
+  if(givingWater){
+    display->drawString(128, 0, "Watering...");
+  }
+}
 
+void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
   display->drawString(0 + x, 11 + y, "Drizzlingggggggggggg");
   display->drawString(0 + x, 21 + y, "Since 2023");
   display->drawString(0 + x, 31 + y, "Since 2023");
   display->drawString(0 + x, 41 + y, "Since 2023");
-
-
 }
 
-void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
-  display->setTextAlignment(TEXT_ALIGN_RIGHT);
+void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
-  display->drawString(128, 0, "Watering...");
+  display->drawString(0 + x, 11 + y, "To Be Implemented");
 }
+void drawBmpFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_10);
+  display->drawString(0 + x, 11 + y, "To Be Implemented");
+}
+void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
+  display->setTextAlignment(TEXT_ALIGN_LEFT);
+  display->setFont(ArialMT_Plain_10);
+  display->drawString(0 + x, 11 + y, "To Be Implemented");
+}
+
+
 
 
 //method containing config of screen and ui
@@ -60,39 +77,15 @@ void oledSetup(){
 
 int charLimitWidth = 21;  //can print 21 chars, 22nd char will print on nextln
 
+BlockNot timeBudget(100);
+
 //periodically refresh display, will enforce update if forced=true
 //move onto next screen if nothing happened for a while
-void updateOLED(bool forced) {
-  ui.update();
-  if(oledRefreshRate.triggered() || forced){
-    switch(menuState){
-      case 0:
-        ;
-        break;
-      case 1:
-        ;
-        break;
-      case 2:
-        ;
-        break;
-      case 3:
-        ;
-        break;
-      case 4:
-        ;
-        break;
-      case 5:
-        ;
-        break;
-      case 6:
-        ;
-        break;
-    }
-  }
-  else{
-    if(changeMenuInterval.triggered()){
-      ui.nextFrame();
-    }
+void updateOLED() {
+  if(timeBudget.triggered()){
+    //dont do work outside of time budget
+    int remainingTimeBudget = ui.update();
+    timeBudget.setDuration(remainingTimeBudget);
   }
 }
 

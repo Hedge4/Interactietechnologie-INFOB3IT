@@ -38,9 +38,6 @@ int moistReadBuffer = 150;                          //can only get data after at
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
-BlockNot oledRefreshRate(2000);                     //interval at which oled is updated to account for new sensor readings
-BlockNot changeMenuInterval(5000);                  //interval at which a new menu screen is shown int automatic mode
-
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;             //indicator that machine is in water giving state
@@ -141,7 +138,7 @@ void loop() {
   waterLoop();
 
   //update the oled according to oled refresh rate
-  updateOLED(false);
+  updateOLED();
 
 }
 
@@ -252,10 +249,10 @@ void onButtonChange(const int state){
     toggleAutomatic(false);
   }
   if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
-  //toggleAutomatic(true);
+    toggleAutomatic(true);
     /////////////////TEMPORARY CODE/////////////////
-    forceRetrieveSensors = true; 
-    Serial.println("HIT");
+   // forceRetrieveSensors = true; 
+   // Serial.println("HIT");
   }
 }
 

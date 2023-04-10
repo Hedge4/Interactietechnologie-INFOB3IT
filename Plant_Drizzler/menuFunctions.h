@@ -11,6 +11,10 @@ void updateOLED(bool forced);
 void changeMenuState(int newState);
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void drawBmpFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+
 void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state);
 
 /*
