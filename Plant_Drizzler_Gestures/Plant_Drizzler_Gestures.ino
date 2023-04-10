@@ -9,20 +9,31 @@ bool prevRefreshState = LOW;
 // interval at which buttons get checked
 BlockNot waterButtonInterval(50);
 BlockNot refreshButtonInterval(50);
+// interval at which accelerometer/gyroscope data is updated, so MPU has time to process
+BlockNot mpuLoopInterval(50);
 
 
 void setup() {
+  // led is on during setup
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  
   // for logging purposes
   Serial.begin(9600);
+
+  gestureDetectionSetup();
+
+  // disable setup led
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 
 void loop() {
-  // we only use millis() for time, so curTime is clear enough
-  unsigned long curTime = millis();
-
+  // interval not just on getting new data but also gesture recognition, since there's no use detecting without new data
+  if (mpuLoopInterval.triggered()) {
   // let deviceFunction update our inputs
-  deviceLoop(curTime);
+    deviceLoop();
+  }
 
   bool waterButtonState = digitalRead(waterButtonPin);
   bool refreshButtonState = digitalRead(refreshButtonPin);
@@ -33,7 +44,7 @@ void loop() {
 
     if (!waterButtonState) {
       // communicate the command to node-red through the serial connection
-      Serial.println("water");
+      Serial.println(F("water"));
     }
   }
 
@@ -43,7 +54,7 @@ void loop() {
 
     if (!refreshButtonState) {
       // communicate the command to node-red through the serial connection
-      Serial.println("refresh");
+      Serial.println(F("refresh"));
     }
   }
 }

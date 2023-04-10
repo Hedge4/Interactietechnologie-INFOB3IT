@@ -6,7 +6,8 @@
 #include "Plant_Drizzler_Gestures.h"
 
 // methods
-void deviceLoop(unsigned long curTime);
+void deviceLoop();
+void gestureDetectionSetup();
 
 
 #endif /*GESTURE_DETECTION_H*/
