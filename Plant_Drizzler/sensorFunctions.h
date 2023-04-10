@@ -9,6 +9,8 @@ void updateAllSensors();
 void checkAmuxSensors();
 void checkBmpSensors();
 
+bool forceUpdateSensors();
+
 int calcAverage(int arr[]);
 
 

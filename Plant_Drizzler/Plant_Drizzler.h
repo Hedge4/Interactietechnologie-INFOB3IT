@@ -35,6 +35,9 @@ extern int moistReadBuffer;
 extern BlockNot oledRefreshRate;
 extern BlockNot changeMenuInterval;
 
+extern BlockNot forceSensorsInterval;
+extern BlockNot moistDebouncing;
+
 extern int menuState;
 
 //servo class
