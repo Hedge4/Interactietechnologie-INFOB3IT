@@ -82,14 +82,18 @@ void setupMqqt() {
 }
 
 void sendMessage(char *payload) {
-  sendMessage(payload, "");
+  sendMessage(payload, nullptr);
+
+  // char* topic = new char[1];
+  // topic[0] = '\0';
+  // sendMessage(payload, topic);
+  // delete topic;
 }
 
 void sendMessage(char *payload, char *topic) {
-  const char* topic = (std::string(MQTT_TOPIC_PREFIX) + topic).c_str();
-  client.publish(topic, payload);
+  const char* fullTopic = (std::string(MQTT_TOPIC_PREFIX) + topic).c_str();
+  client.publish(fullTopic, payload);
 }
-
 
 
 /* =========================
