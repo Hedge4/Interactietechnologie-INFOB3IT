@@ -2,17 +2,23 @@
 #define PLANT_DRIZZLER_H
 
 #include <Wire.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
 #include <Adafruit_BMP280.h>
 #include <Servo.h>
 #include <BlockNot.h> 
 #include <ButtonDebounce.h>
 
+//oled
+#include "SSD1306Wire.h" 
+#include "OLEDDisplayUi.h"
+
+
+//own functions
 #include "sensorFunctions.h"
 #include "menuFunctions.h"
 
-extern Adafruit_SSD1306 display;
+extern SSD1306Wire display;
+extern OLEDDisplayUi ui;
+
 extern Servo myservo;
 extern Adafruit_BMP280 bmp;
 
@@ -32,10 +38,12 @@ extern BlockNot moistInterval;
 extern BlockNot bmpInterval;
 extern int moistReadBuffer;
 
-extern BlockNot oledRefreshRate;
-extern BlockNot changeMenuInterval;
+extern BlockNot forceSensorsInterval;
+extern BlockNot moistDebouncing;
 
 extern int menuState;
+
+extern bool givingWater;
 
 //servo class
 //TODO: MOVE TO BETTER POSITION

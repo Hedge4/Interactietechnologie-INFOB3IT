@@ -1,19 +1,15 @@
 #include "Plant_Drizzler.h"
 
+//oled definitions
+SSD1306Wire display(0x3c, SDA, SCL);
+OLEDDisplayUi ui     ( &display );
+
 //bmp definitions
 #define BMP_SCK  (13)
 #define BMP_MISO (12)
 #define BMP_MOSI (11)
 #define BMP_CS   (10)
 Adafruit_BMP280 bmp;
-
-//oled definitiions
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 64 // OLED display height, in pixels
-#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
-#define SCREEN_ADDRESS 0x3C 
-Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
-
 
 //PINS
 int selPin = D6;  //write LOW for LDR, HIGH for moist
@@ -37,19 +33,21 @@ bool automaticMode;
 
 //timers
 int moistIntervalLong = 5000;                       //normal moisture interval
-int moistIntervalShort = 500;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
+int moistIntervalShort = 300;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
 int moistReadBuffer = 150;                          //can only get data after at least 100ms after turning on
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
-BlockNot oledRefreshRate(2000);                     //interval at which oled is updated to account for new sensor readings
-BlockNot changeMenuInterval(5000);                  //interval at which a new menu screen is shown int automatic mode
-
 //plant watering vars
 int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
 bool givingWater;             //indicator that machine is in water giving state
-unsigned long lastWatered;
+unsigned long lastWatered;    //remember when last given water
+bool forceGiveWater;  //for manual mode, gives signal that water must be given in this cycle
 
+//retrieve sensor command vars
+BlockNot forceSensorsInterval(500);  //short interval after which command is displayed in which moist sensor data can be refreshed
+BlockNot moistDebouncing(50);     //short interval so moisture will not be read each cycle
+bool forceRetrieveSensors;            //force flag for command
 
 //servo definition
 int servoStartPosition = 0;             //servo returns to starting position at start of program
@@ -68,11 +66,7 @@ void setup() {
   Serial.begin(9600);
 
   //OLED setup
-  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-  }
-  setOLEDconfig();
+  oledSetup();
 
   //bmp setup
   unsigned status;
@@ -88,21 +82,22 @@ void setup() {
   pinMode(selPin, OUTPUT);  
   pinMode(ledPin, OUTPUT);
 
-  //go to menu screen
-  menuState = 1;
-  changeMenuState(menuState);
-
   //move arm to start position
   myArm.moveToStart();
 
   //initialise lastwatered
   lastWatered = millis();
 
-  //setup button callback
+  //setup function that happens when buttonstate changes
   toggleButton.setCallback(onButtonChange);
 
   //setup automaticmode
   toggleAutomatic(true);  
+
+  //setup commands
+  forceGiveWater = false;
+  forceRetrieveSensors = false;
+  forceSensorsInterval.stop();
 
 }
 
@@ -110,8 +105,20 @@ void loop() {
   //check for button updates and change accordingly in callback function
   toggleButton.update();
 
-  //update the sensors
-  updateAllSensors();
+  //update the sensors, except when retrieve sensor command is issued, then run separate logic
+  if(!forceRetrieveSensors){
+    updateAllSensors();
+  }
+  else{
+    if(forceUpdateSensors()){
+      //retrieval happened, print to Serial and turn of force flag
+      Serial.print("Moist is "); Serial.println(moistReading);
+      Serial.print("Light is "); Serial.println(ldrReading);
+      Serial.print("Temp is "); Serial.println(tempReading);
+      Serial.print("Press is "); Serial.println(pressureReading);
+      forceRetrieveSensors = false;
+    }
+  }
 
   //update servo
   myArm.update();
@@ -127,7 +134,7 @@ void loop() {
   waterLoop();
 
   //update the oled according to oled refresh rate
-  updateOLED(false);
+  updateOLED();
 
 }
 
@@ -135,19 +142,20 @@ void loop() {
 void waterLoop(){
 
   //bring machine to watergiving state
-  if(   automaticMode                         // automatic indicator
+  if(   (automaticMode                         // automatic indicator
     &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
     && !givingWater                           // indicator that machine is not in water-giving state yet
     && myArm.available                        // indicator that servo can be used
     && afterWaterGracePeriod.triggered()      // dont soil plants too fast after last soiling
+    ) ||
+      (!automaticMode                         //if in manual mode, only give water if forced
+    && forceGiveWater
+    && !givingWater                           //only issue water commands while no watering is in process
+    )
     ){
     //prepare to give water
     givingWater = true;
     dispensing = true;  //currently moving towards watering position
-
-    //turn off menu carousel, set  menu screen to watering can
-    toggleCarousel(false);
-    changeMenuState(0);
 
     //move towards watering position
     myArm.moveToWatering();
@@ -187,10 +195,9 @@ void waterLoop(){
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
-      //turn back to normal rotation if in automatic
-      if(automaticMode){
-        toggleCarousel(true);
-        changeMenuState(2);    
+      //if in manual, turn of forced flag
+      if(!automaticMode){
+        forceGiveWater = false;
       }
     }
   }
@@ -202,34 +209,18 @@ void waterLoop(){
 void toggleAutomatic(bool mode){
   if(mode){
     //change to automatic ->
-    //turn on rotating menu timers
-    toggleCarousel(true);
     automaticMode = true;
-    //reset menu to start screen
-    changeMenuState(1);
     //change light (reversed apparantly?)
     digitalWrite(ledPin, LOW);  
   } 
   else{
     //change to manual->
-    //turn off rotating menu timers
-    toggleCarousel(false);
     automaticMode = false;
-    //reset menu to start screen
-    changeMenuState(1);
     //change light
     digitalWrite(ledPin, HIGH);
   }
 }
 
-
-//sets default font (size) for oled to use
-void setOLEDconfig(){  
-  display.clearDisplay();
-  display.setTextSize(1);      // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE); // Draw white text
-  display.cp437(true);         // Use full 256 char 'Code Page 437' font
-}
 
 void onButtonChange(const int state){
   if(state == HIGH && automaticMode && buttonCooldown.triggered()){
@@ -238,11 +229,11 @@ void onButtonChange(const int state){
   }
   if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
     toggleAutomatic(true);
+    /////////////////TEMPORARY CODE/////////////////
+   // forceRetrieveSensors = true; 
+   // Serial.println("HIT");
   }
-
 }
-
-
 
 Arm::Arm(int startPosition, int endPosition){
   myservo.attach(2);
