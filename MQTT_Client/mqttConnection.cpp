@@ -8,9 +8,9 @@
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-// convert to string, concatenate, convert back to char*
-const char* statusTopic = (std::string(MQTT_TOPIC_PREFIX) + "/status/plant_drizzler").c_str();
-const char* subcribeTopic = (std::string(MQTT_TOPIC_PREFIX) + "/#").c_str();
+// convert to string and concatenate
+const String statusTopic = String(MQTT_TOPIC_PREFIX) + "/status/plant_drizzler";
+const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 
 
 /* ========================
@@ -34,12 +34,12 @@ void mqttReconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection... ");
     // attempt to connect
-    if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQQT_PASSWORD, statusTopic, 0, true, "Offline", true)) {
+    if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD, statusTopic.c_str(), 0, true, "Offline")) {
       Serial.println("connected!");
       // Once connected, publish an announcement...
-      client.publish(statusTopic, "Online", true);
+      client.publish(statusTopic.c_str(), "Online", true);
       // ... and resubscribe
-      client.subscribe(subcribeTopic);
+      client.subscribe(subscribeTopic.c_str());
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -76,9 +76,11 @@ void setupWifi() {
   Serial.println();
 }
 
-void setupMqqt() {
+void setupMqtt() {
   client.setServer(MQTT_SERVER, 1883);
   client.setCallback(callback);
+  client.setSocketTimeout(30);
+  client.setKeepAlive(60);
 }
 
 void sendMessage(char *payload) {
@@ -91,8 +93,8 @@ void sendMessage(char *payload) {
 }
 
 void sendMessage(char *payload, char *topic) {
-  const char* fullTopic = (std::string(MQTT_TOPIC_PREFIX) + topic).c_str();
-  client.publish(fullTopic, payload);
+  String fullTopic = String(MQTT_TOPIC_PREFIX) + topic;
+  client.publish(fullTopic.c_str(), payload);
 }
 
 

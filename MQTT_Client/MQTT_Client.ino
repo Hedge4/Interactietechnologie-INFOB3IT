@@ -10,7 +10,7 @@ void setup() {
   Serial.println(); // cut off any half-transmitted data
 
   setupWifi();
-  setupMqqt();
+  setupMqtt();
 
   // allow the MQTT client to sort itself out
   delay(3000);

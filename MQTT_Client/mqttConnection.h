@@ -3,12 +3,11 @@
 
 #include <ESP8266WiFi.h>
 #include <PubSubClient.h>
-#include <string>
 #include "auth.h"
 
 // public methods
 void setupWifi();
-void setupMqqt();
+void setupMqtt();
 boolean mqttLoop();
 void sendMessage(char* message);
 void sendMessage(char* message, char* topic);
