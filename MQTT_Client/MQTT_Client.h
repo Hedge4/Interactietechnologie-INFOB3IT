@@ -1,8 +1,7 @@
-#ifndef PUBSUBCLIENT_EXAMPLE_H
-#define PUBSUBCLIENT_EXAMPLE_H
+#ifndef MQTT_CLIENT_H
+#define MQTT_CLIENT_H
 
-#include <Arduino.h>
 #include "mqttConnection.h"
 
 
-#endif /*PUBSUBCLIENT_EXAMPLE_H*/
+#endif /*MQTT_CLIENT_H*/
