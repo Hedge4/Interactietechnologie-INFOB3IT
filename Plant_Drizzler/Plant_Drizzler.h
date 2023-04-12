@@ -11,10 +11,23 @@
 #include "SSD1306Wire.h" 
 #include "OLEDDisplayUi.h"
 
-
-//own functions
+//other
 #include "sensorFunctions.h"
 #include "menuFunctions.h"
+#include "mqttConnection.h"
+
+//bmp definitions
+#define BMP_SCK  (13)
+#define BMP_MISO (12)
+#define BMP_MOSI (11)
+#define BMP_CS   (10)
+
+//command definitions
+#define WATER_COMMAND       '0'
+#define MORE_WATER_COMMAND  '1'
+#define REFRESH_COMMAND     '2'
+
+
 
 extern SSD1306Wire display;
 extern OLEDDisplayUi ui;
@@ -41,9 +54,9 @@ extern int moistReadBuffer;
 extern BlockNot forceSensorsInterval;
 extern BlockNot moistDebouncing;
 
-extern int menuState;
-
 extern bool givingWater;
+
+void performCommand(int command);
 
 //servo class
 //TODO: MOVE TO BETTER POSITION

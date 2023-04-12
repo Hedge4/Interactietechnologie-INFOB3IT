@@ -1,11 +1,17 @@
 infob3it/099/
 
+
 sensor/moisture/level	
 sensor/moisture/reading
-sensor/light
+sensor/light/level
+sensor/light/reading
 sensor/pressure			
 sensor/temp
 
-device/force
-device/retrieve
-device/manual
+commands
+
+errors 
+
+status/gesture_controll
+
+mode/plant_drizzler

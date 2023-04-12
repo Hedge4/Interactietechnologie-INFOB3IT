@@ -14,6 +14,9 @@ void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
   if(givingWater){
     display->drawString(128, 0, "Watering...");
   }
+  else{
+    display->drawString(128, 0, "");
+  }
 }
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
