@@ -92,7 +92,7 @@ void sendMessage(char *payload) {
   // delete topic;
 }
 
-void sendMessage(char *payload, char *topic) {
+void sendMessage(const char *payload, const char *topic) {
   String fullTopic = String(MQTT_TOPIC_PREFIX) + topic;
   client.publish(fullTopic.c_str(), payload);
 }

@@ -1,0 +1,7 @@
+infob3it/099/
+
+sensor/moisture/level	
+sensor/moisture/reading
+sensor/light
+sensor/pressure			//needs to be of format "x.xx bar"
+sensor/temp

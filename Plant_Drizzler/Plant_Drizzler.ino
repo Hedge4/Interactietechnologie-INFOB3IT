@@ -39,28 +39,28 @@ BlockNot moistInterval(moistIntervalLong);          //interval at which moisture
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
 //plant watering vars
-int moistLevelThreshold = 2;  //if soil gets below moistness 2, apply water
-bool givingWater;             //indicator that machine is in water giving state
-unsigned long lastWatered;    //remember when last given water
-bool forceGiveWater;  //for manual mode, gives signal that water must be given in this cycle
+int moistLevelThreshold = 2;                        //if soil gets below moistness 2, apply water
+bool givingWater;                                   //indicator that machine is in water giving state
+unsigned long lastWatered;                          //remember when last given water
+bool forceGiveWater;                                //for manual mode, gives signal that water must be given in this cycle
 
 //retrieve sensor command vars
-BlockNot forceSensorsInterval(500);  //short interval after which command is displayed in which moist sensor data can be refreshed
-BlockNot moistDebouncing(50);     //short interval so moisture will not be read each cycle
-bool forceRetrieveSensors;            //force flag for command
+BlockNot forceSensorsInterval(500);                 //short interval after which command is displayed in which moist sensor data can be refreshed
+BlockNot moistDebouncing(50);                       //short interval so moisture will not be read each cycle
+bool forceRetrieveSensors;                          //force flag for command
 
 //servo definition
-int servoStartPosition = 0;             //servo returns to starting position at start of program
-int servoWateringPosition = 180;        //position servo should be in to get water flowing
+int servoStartPosition = 0;                           //servo returns to starting position at start of program
+int servoWateringPosition = 180;                      //position servo should be in to get water flowing
 Arm myArm(servoStartPosition, servoWateringPosition);
 //servo vars
-BlockNot holdAtWateringPosition(5000);    //hold servo at watering position for this much time
-BlockNot afterWaterGracePeriod(5000);     //after giving water, set a grace period of x seconds where plant can not be given water again
-bool dispensing;                          //if true, servo currently moving towards watering position. False -> moving towards startposition
+BlockNot holdAtWateringPosition(2000);              //hold servo at watering position for this much time
+BlockNot afterWaterGracePeriod(5000);               //after giving water, set a grace period of x seconds where plant can not be given water again
+bool dispensing;                                    //if true, servo currently moving towards watering position. False -> moving towards startposition
 
-//button setup, set debounce time to 50 ms
-ButtonDebounce toggleButton(flashPin, 50);
-BlockNot buttonCooldown(1000);                //wait 1 second before accepting new inputs of button
+//button setup
+ButtonDebounce toggleButton(flashPin, 50);          //set debounce time to 50 ms
+BlockNot buttonCooldown(1000);                      //wait 1 second before accepting new inputs of button
 
 void setup() {
   Serial.begin(9600);

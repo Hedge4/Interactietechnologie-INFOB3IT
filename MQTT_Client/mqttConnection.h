@@ -10,7 +10,7 @@ void setupWifi();
 void setupMqtt();
 boolean mqttLoop();
 void sendMessage(char* message);
-void sendMessage(char* message, char* topic);
+void sendMessage(const char* message, const char* topic);
 
 
 #endif /*MQTT_CONNECTION_H*/
