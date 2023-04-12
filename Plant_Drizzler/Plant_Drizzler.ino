@@ -34,6 +34,7 @@ int moistReadBuffer = 150;                          //can only get data after at
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
+//BlockNot publishSensorsInterval(5000);              //interval at which all sensorvalues will be published periodically
 
 //plant watering vars
 int moistLevelThreshold = 2;                        //if soil gets below moistness 2, apply water
@@ -96,7 +97,8 @@ void setup() {
   toggleButton.setCallback(onButtonChange);
 
   //setup automaticmode
-  toggleAutomatic(true);  
+  //gets done by retained message
+  //toggleAutomatic(true);  
 
   //setup commands
   forceGiveWater = false;
@@ -150,7 +152,6 @@ void loop() {
 
 //handle water dispenser flow
 void waterLoop(){
-
   //bring machine to watergiving state
   if(   (automaticMode                         // automatic indicator
     &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
@@ -231,24 +232,17 @@ void toggleAutomatic(bool mode){
 
 void onButtonChange(const int state){
   if(state == HIGH && automaticMode && buttonCooldown.triggered()){
-    //change to manual if in automatic and button is pressed
-    toggleAutomatic(false);
-
-    /////////////////TEMPORARY CODE/////////////////
-    //String ding = "hallo";
-    //sendMessage(ding.c_str(), "commands/manual");
-
+    //publish the change, callback will handle changing modes
+    sendMessage(TOGGLE_FALSE_PUBLISH, modeTopic.c_str(), true);
   }
-  if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
-    toggleAutomatic(true);
-    /////////////////TEMPORARY CODE/////////////////
-   // forceRetrieveSensors = true; 
-   // Serial.println("HIT");
+  else if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
+    //publish the change, callback will handle changing modes
+    sendMessage(TOGGLE_TRUE_PUBLISH, modeTopic.c_str(), true);
   }
 }
 
 
-void performCommand(int command){
+void performCommand(char command){
   switch(command){
     case(WATER_COMMAND):
       forceGiveWater = true;
@@ -260,6 +254,17 @@ void performCommand(int command){
       break;
     default:
       break;
+  }
+}
+
+void performModeToggle(char mode){
+  switch(mode){
+    case(TOGGLE_TRUE_RECEIVE):
+      toggleAutomatic(true);
+      break;
+    case(TOGGLE_FALSE_RECEIVE):
+      toggleAutomatic(false);
+      break;      
   }
 }
 

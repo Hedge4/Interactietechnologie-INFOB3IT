@@ -23,9 +23,15 @@
 #define BMP_CS   (10)
 
 //command definitions
-#define WATER_COMMAND       '0'
-#define MORE_WATER_COMMAND  '1'
-#define REFRESH_COMMAND     '2'
+#define WATER_COMMAND         '0'
+#define MORE_WATER_COMMAND    '1'
+#define REFRESH_COMMAND       '2'
+
+//toggle definitions
+#define TOGGLE_TRUE_PUBLISH   "1"
+#define TOGGLE_FALSE_PUBLISH  "0"
+#define TOGGLE_TRUE_RECEIVE   '1'
+#define TOGGLE_FALSE_RECEIVE  '0'
 
 
 
@@ -56,7 +62,8 @@ extern BlockNot moistDebouncing;
 
 extern bool givingWater;
 
-void performCommand(int command);
+void performCommand(char command);
+void performModeToggle(char mode);
 
 //servo class
 //TODO: MOVE TO BETTER POSITION

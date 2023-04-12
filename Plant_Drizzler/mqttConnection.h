@@ -12,10 +12,15 @@
 void setupWifi();
 void setupMqtt();
 boolean mqttLoop();
-void sendMessage(const char* message, String topic);
 
+void sendMessage(const char *payload, bool retain = false);
+void sendMessage(const char* message, const char *topic, bool retain = false);
 
+extern String modeTopic,          commandTopic, 
+              moistReadingTopic,  moistLevelTopic, 
+              lightReadingTopic,  lightLevelTopic,
+              pressureTopic,      temperatureTopic; 
+//extern const String subscribeTopic, statusTopic;              
 
-void setupSubscriptions();
 
 #endif /*MQTT_CONNECTION_H*/
