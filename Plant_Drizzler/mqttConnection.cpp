@@ -12,12 +12,16 @@ PubSubClient client(espClient);
 const String statusTopic = String(MQTT_TOPIC_PREFIX) + "/status/plant_drizzler";
 const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 
+//check for command topic
+String commandTopic = String(MQTT_TOPIC_PREFIX) + "/commands";
 
 /* ========================
   ===     FUNCTIONS     ===
   ====================== */
 
+//TODO: write callback functions for each topic
 void callback(char* topic, byte* payload, unsigned int length) {
+  //log incoming messages
   Serial.print("Message arrived: [");
   Serial.print(topic);
   Serial.print("] ");
@@ -25,6 +29,17 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print((char)payload[i]);
   }
   Serial.println();
+
+
+  //decide what to do based on topic
+  //convert char* to string
+  String inTopic = topic;
+  if(inTopic == commandTopic){
+    //command payloads should be single byte
+    performCommand(payload[0]);
+  }
+
+  
 }
 
 void mqttReconnect() {
@@ -83,7 +98,7 @@ void setupMqtt() {
   client.setKeepAlive(60);
 }
 
-void sendMessage(const char *payload, const char *topic) {
+void sendMessage(const char *payload, String topic) {
   String fullTopic = String(MQTT_TOPIC_PREFIX) + topic;
   client.publish(fullTopic.c_str(), payload);
 }
@@ -105,3 +120,8 @@ boolean mqttLoop() {
 
   return client.connected();
 }
+
+
+
+
+

@@ -17,7 +17,6 @@ void setup() {
   digitalWrite(BUILTIN_LED, LOW);
 }
 
-
 void loop() {
   // TODO show some kind of error light if false
   boolean clientConnected = mqttLoop();
