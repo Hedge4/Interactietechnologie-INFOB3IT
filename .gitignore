@@ -1,4 +1,5 @@
 .vscode
+/.arduino/
 
 # different for each user
 auth.h
