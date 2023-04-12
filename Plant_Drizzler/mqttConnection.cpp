@@ -16,12 +16,12 @@ const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 String commandTopicPrefixed = String(MQTT_TOPIC_PREFIX) +"/commands";
 String modeTopic            = "/mode/plant_drizzler";
 String modeTopicPrefixed    = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler";
-String moistReadingTopic    = String(MQTT_TOPIC_PREFIX) + "/sensor/moisture/reading";
-String moistLevelTopic      = String(MQTT_TOPIC_PREFIX) + "/sensor/moisture/level";
-String lightReadingTopic    = String(MQTT_TOPIC_PREFIX) + "/sensor/light/reading";
-String lightLevelTopic      = String(MQTT_TOPIC_PREFIX) + "/sensor/light/level";
-String pressureTopic        = String(MQTT_TOPIC_PREFIX) + "/sensor/pressure";
-String temperatureTopic     = String(MQTT_TOPIC_PREFIX) + "/sensor/temperature";
+String moistReadingTopic    = "/sensor/moisture/reading";
+String moistLevelTopic      = "/sensor/moisture/level";
+String lightReadingTopic    = "/sensor/light/reading";
+String lightLevelTopic      = "/sensor/light/level";
+String pressureTopic        = "/sensor/pressure";
+String temperatureTopic     = "/sensor/temperature";
 
 
 /* ========================

@@ -34,7 +34,7 @@ int moistReadBuffer = 150;                          //can only get data after at
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
-//BlockNot publishSensorsInterval(5000);              //interval at which all sensorvalues will be published periodically
+BlockNot publishSensorsInterval(5000);              //interval at which all sensorvalues will be published periodically
 
 //plant watering vars
 int moistLevelThreshold = 2;                        //if soil gets below moistness 2, apply water
@@ -123,13 +123,19 @@ void loop() {
   }
   else{
     if(forceUpdateSensors()){
-      //retrieval happened, print to Serial and turn of force flag
-      Serial.print("Moist is "); Serial.println(moistReading);
-      Serial.print("Light is "); Serial.println(ldrReading);
-      Serial.print("Temp is "); Serial.println(tempReading);
-      Serial.print("Press is "); Serial.println(pressureReading);
+      //retrieval happened, print to Serial, publish and turn of force flag
+      //Serial.print("Moist is "); Serial.println(moistReading);
+      //Serial.print("Light is "); Serial.println(ldrReading);
+      //Serial.print("Temp is "); Serial.println(tempReading);
+      //Serial.print("Press is "); Serial.println(pressureReading);
+      performSensorPing();
       forceRetrieveSensors = false;
     }
+  }
+
+  //publish new sensorvalues at interval
+  if(publishSensorsInterval.triggered()){
+    performSensorPing();
   }
 
   //update servo
@@ -266,6 +272,16 @@ void performModeToggle(char mode){
       toggleAutomatic(false);
       break;      
   }
+}
+
+//method publishes all sensorvalues
+void performSensorPing(){
+  sendMessage(String(moistReading).c_str(), moistReadingTopic.c_str());
+  sendMessage(String(moistLevel).c_str(), moistLevelTopic.c_str());
+  sendMessage(String(ldrReading).c_str(), lightReadingTopic.c_str());
+  sendMessage(String(lightLevel).c_str(), lightLevelTopic.c_str());
+  sendMessage(String(pressureReading).c_str(), pressureTopic.c_str());
+  sendMessage(String(tempReading).c_str(), temperatureTopic.c_str());
 }
 
 

@@ -64,6 +64,7 @@ extern bool givingWater;
 
 void performCommand(char command);
 void performModeToggle(char mode);
+void performSensorPing();
 
 //servo class
 //TODO: MOVE TO BETTER POSITION
