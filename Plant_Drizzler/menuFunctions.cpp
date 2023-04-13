@@ -90,8 +90,6 @@ void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t
   display->setFont(ArialMT_Plain_10);
   display->drawString(0 + x, 11 + y, "Time since last watering");
   display->drawString(0 + x, 21 + y, msgLastWater);
-  display->drawString(0 + x, 31 + y, "Randominfo");
-  display->drawString(0 + x, 41 + y, "to be discovered");
 }
 
 
