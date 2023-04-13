@@ -124,14 +124,14 @@ void getMpuValues() {
   // Serial.print("gyroZ:");
   // Serial.println(gyroZ);
   
-  // Serial.print("roll:");
-  // Serial.print(roll);
-  // Serial.print(",");
-  // Serial.print("pitch:");
-  // Serial.print(pitch);
-  // Serial.print(",");
-  // Serial.print("yaw:");
-  // Serial.println(yaw);
+  Serial.print("roll:");
+  Serial.print(roll);
+  Serial.print(",");
+  Serial.print("pitch:");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print("yaw:");
+  Serial.println(yaw);
   
   // Serial.print("speedX:");
   // Serial.print(speedX);

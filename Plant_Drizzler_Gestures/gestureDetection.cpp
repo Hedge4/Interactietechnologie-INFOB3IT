@@ -12,7 +12,7 @@
 #define DETECTING   3 // Detecting which gesture was used
 #define DETECTED    4 // Finished detecting a gesture, in grace period
 
-int deviceState = ACTIVATED; // TODO
+int deviceState = DETECTING; // TODO set to IDLE
 unsigned long deviceTimestamp = 0;
 
 int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED or ACTIVATED --> IDLE
@@ -21,8 +21,12 @@ boolean ledState;                     // used for blinking led
 BlockNot graceLedInterval(200);       // how fast the led blinks while awaiting state change
 BlockNot dectectionLedInterval(500);  // led blink interval in DETECTING state
 
-// we store the latest rotation/acceleration values for our detection functions
-float storedRoll, storedPitch, storedYaw, storedAccX, storedAccY, storedAccZ;
+// we store the last x rotation/acceleration values for our detection functions
+const int maxValuesStored = 5;
+float lastRolls[maxValuesStored], lastPitches[maxValuesStored], lastYaws[maxValuesStored],
+  lastAccXs[maxValuesStored], lastAccYs[maxValuesStored], lastAccZs[maxValuesStored];
+// iterator to find the value that was last added to the array
+int lastValueIterator;
 
 // initialisation (bend hand down, and back up) detection variables
 int initDetectionStage;
@@ -48,8 +52,6 @@ void changeDeviceState(int newState) {
     switch (newState) {
       case IDLE:
         digitalWrite(LED_BUILTIN, LOW);
-        // reset variables from ACTIVATED state
-        initDetectionStage = initBeginValue = initMoveValue = initReturnValue = 0;
         break;
         
       case ACTIVATING:
@@ -59,25 +61,31 @@ void changeDeviceState(int newState) {
 
       case ACTIVATED:
         digitalWrite(LED_BUILTIN, LOW);
-        // reset variables from DETECTING state
-        // TODO change variables from detecting to 0
+        // reset variables used in ACTIVATED state
+        initDetectionStage = initBeginValue = initMoveValue = initReturnValue = 0;
         break;
 
       case DETECTING:
         digitalWrite(LED_BUILTIN, HIGH);
         ledState = true;
-        // reset variables from ACTIVATED state
-        initDetectionStage = initBeginValue = initMoveValue = initReturnValue = 0;
+        // reset variables used in DETECTING state
+        // TODO change variables from detecting to 0
         break;
 
       case DETECTED:
         // no ledState since it's constant on instead blinking
         digitalWrite(LED_BUILTIN, HIGH);
-        // reset variables from DETECTING state
-        // TODO change variables from detecting to 0
         break;
     }
   }
+}
+
+float getArrayAverage(float *arr, int size) {
+  float sum = 0;
+  for (int i = 0; i < size; i++) {
+    sum += arr[i];
+  }
+  return sum / size;
 }
 
 
@@ -91,8 +99,14 @@ boolean motionDetected() {
 }
 
 boolean detectInitialisation() {
+  // most recently saved MPU6050 values
+  float lastPitch = lastPitches[lastValueIterator];
+  float lastAccX = lastAccXs[lastValueIterator];
+  float lastAccY = lastAccYs[lastValueIterator];
+  float lastAccZ = lastAccZs[lastValueIterator];
+
   if (initDetectionStage == 0 || initDetectionStage == 1) {
-    if (abs(storedAccX) < 4000 && abs(storedAccY) < 4000 && abs(storedAccZ) < 1000) {
+    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 1000) {
       initBeginValue = initBeginValue < 25 ? initBeginValue + 2 : 26; // max value 26
     } else {
       initBeginValue = --initBeginValue < 0 ? 0 : initBeginValue;
@@ -108,7 +122,7 @@ boolean detectInitialisation() {
   }
 
   if (initDetectionStage == 1 || initDetectionStage == 2) {
-    if (abs(storedAccX) > 6000 && abs(storedAccZ) > 3000 && abs(storedPitch) > 20) {
+    if (abs(lastAccX) > 6000 && abs(lastAccZ) > 3000 && abs(lastPitch) > 20) {
       initMoveValue = initMoveValue < 13 ? initMoveValue + 3 : 15; // max value 15
     } else {
       initMoveValue = --initMoveValue < 0 ? 0 : initMoveValue;
@@ -122,7 +136,7 @@ boolean detectInitialisation() {
 
   if (initDetectionStage == 2) {
     // don't use pitch here since it doesn't go back to 0 fast enough
-    if (abs(storedAccX) < 4000 && abs(storedAccY) < 4000 && abs(storedAccZ) < 1000) {
+    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 1000) {
       initReturnValue++;
     } else {
       initReturnValue = --initReturnValue < 0 ? 0 : initReturnValue;
@@ -131,7 +145,7 @@ boolean detectInitialisation() {
     if (initMoveValue < 4) {
       if (initReturnValue >= 3) {
         // gesture detected only if hand is now back in normal position
-        initDetectionStage = 5;
+        return true; // no need to reset any variables, state change does that
       } else {
         // not detected if hand ends in different position
         initMoveValue = 0;
@@ -142,33 +156,39 @@ boolean detectInitialisation() {
     }
   }
 
-  Serial.print(',');
-  Serial.print("BeginValue:");
-  Serial.print(initBeginValue * 100);
-  Serial.print(',');
-  Serial.print("MoveValue:");
-  Serial.print(initMoveValue * 100);
-  Serial.print(',');
-  Serial.print("ReturnValue:");
-  Serial.print(initReturnValue * 100);
-  Serial.print(',');
-  Serial.println(initDetectionStage * -2);
+  return false;
+}
 
+// returns 1 if detected, or 2 if 'more water' gesture detected
+int detectWaterGesture() {
+  // TODO
+
+  // return 0 if not detected
+  return 0;
+}
+
+boolean detectRefreshGesture() {
+  // TODO
+
+  // return false if not detected
   return false;
 }
 
 
-/* =============================
-  ===   EXTERNAL FUNCTIONS   ===
-  =========================== */
+/* ===========================
+  ===   PUBLIC FUNCTIONS   ===
+  ========================= */
 
 void storeMpuValues(float roll, float pitch, float yaw, float accX, float accY, float accZ) {
-  storedRoll = roll;
-  storedPitch = pitch;
-  storedYaw = yaw;
-  storedAccX = accX;
-  storedAccY = accY;
-  storedAccZ = accZ;
+  // reset lastValueIterator to 0 if it reaches the end of the arrays
+  lastValueIterator = ++lastValueIterator < maxValuesStored ? lastValueIterator : 0;
+
+  lastRolls[lastValueIterator] = roll;
+  lastPitches[lastValueIterator] = pitch;
+  lastYaws[lastValueIterator] = yaw;
+  lastAccXs[lastValueIterator] = accX;
+  lastAccYs[lastValueIterator] = accY;
+  lastAccZs[lastValueIterator] = accZ;
 }
 
 
@@ -181,15 +201,15 @@ void gestureDetectionLoop() {
   getMpuValues();
 
   // TODO remove test functions
-  Serial.print("Motion: ");
-  Serial.println(detectInitialisation());
+  // Serial.print("Motion:");
+  // Serial.println(motionDetected());
 
 
-  return; // TODO
+  return; // TODO remove this obviously
 
   switch (deviceState) {
     case IDLE:
-      // leave idle state in case any motion was detected
+      // leave idle state if any motion was detected
       if (motionDetected()) {
         changeDeviceState(ACTIVATING);
       }
@@ -209,12 +229,13 @@ void gestureDetectionLoop() {
       break;
 
     case ACTIVATED:
-      // in this state deviceTimestamp stores the last detected motion
+      // in this state deviceTimestamp stores the last detected motion...
       if (motionDetected()) {
         deviceTimestamp = millis();
       } else if (millis() - gracePeriod > deviceTimestamp) {
-        // and if no motion is detected for too long we go back into IDLE state
+        // ...and if no motion is detected for too long we go back into IDLE state
         changeDeviceState(IDLE);
+        return;
       }
 
       // detect initialisation gesture, and if detected move into the actual detection mode
@@ -228,6 +249,7 @@ void gestureDetectionLoop() {
       if (millis() - maxDetectionTime > deviceTimestamp) {
         // and if no motion is detected for too long we go back into IDLE state
         changeDeviceState(ACTIVATED);
+        return;
       }
 
       // after recognising initialisatino gesture, slowly blink to show we're detecting now
@@ -236,7 +258,19 @@ void gestureDetectionLoop() {
         digitalWrite(LED_BUILTIN, ledState);
       }
 
-      // TODO move the remaining gesture functions here
+      if (detectRefreshGesture()) {
+        sendRefreshCommand();
+        return;
+      }
+
+      int waterCommand = detectWaterGesture();
+      if (waterCommand) {
+        if (waterCommand == 1) {
+          sendWaterCommand();
+        } else if (waterCommand == 2) {
+          sendMoreWaterCommand();
+        }
+      }
       break;
 
     case DETECTED:

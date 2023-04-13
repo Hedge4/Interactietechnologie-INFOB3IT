@@ -17,6 +17,23 @@ BlockNot refreshButtonInterval(50);
 BlockNot mpuLoopInterval(100);
 
 
+/* ===========================
+  ===   PUBLIC FUNCTIONS   ===
+  ========================= */
+
+void sendWaterCommand() {
+  // TODO
+}
+
+void sendMoreWaterCommand() {
+  // TODO
+}
+
+void sendRefreshCommand() {
+  // TODO
+}
+
+
 /* =========================
   ===     MAIN SETUP     ===
   ======================= */
