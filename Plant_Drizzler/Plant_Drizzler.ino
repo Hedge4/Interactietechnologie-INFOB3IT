@@ -66,6 +66,13 @@ bool dispensing;                                    //if true, servo currently m
 ButtonDebounce toggleButton(flashPin, 50);          //set debounce time to 50 ms
 BlockNot buttonCooldown(1000);                      //wait 1 second before accepting new inputs of button
 
+//warning light, warn when water resevoir is empty
+int lastMoistLevel;                                 //keep track of last sensed level
+int warningTicks;                                   //keep track how many times moist did not change
+int warningLimit = 2;                               //amount of warnings device can get before it assumes resevoir is empty
+BlockNot warnBlinkInterval(1000);                   //interval at which warning light will blink
+int warnLightPin = D4;                              //pin of warning light
+
 void setup() {
   Serial.begin(9600);
 
@@ -152,10 +159,30 @@ void loop() {
     && moistInterval.getDuration() == moistIntervalShort){ 
     //Serial.println("5. TURN OFF MOIST");
     moistInterval.setDuration(moistIntervalLong);
+
+    //check to see if moisture changed
+    bool moistChanged = (moistLevel == lastMoistLevel);
+    if(!moistChanged){
+      warningTicks++;
+    }
+    else{
+      warningTicks = 0;
+    }
   }
 
   //perform water stuff
   waterLoop();
+
+  //if amount of times moisture did not change exceed a threshold, no water is assumed to be in resevoir
+  //dont do this whilst giving water
+  if(warningTicks > warningLimit && !givingWater && warnBlinkInterval.triggered()){
+    if(digitalRead(warnLightPin) == HIGH){
+      digitalWrite(warnLightPin, LOW);
+    }
+    else{
+      digitalWrite(warnLightPin, HIGH);
+    }
+  }
 
   //update the oled according to oled refresh rate
   updateOLED();
@@ -182,6 +209,10 @@ void waterLoop(){
     &&  tempReading < tempThresholdHigh        //or hot
     )             
     ){
+
+    //save moisture level to see if watering does anything
+    lastMoistLevel = moistLevel;
+
     //prepare to give water
     givingWater = true;
     dispensing = true;  //currently moving towards watering position

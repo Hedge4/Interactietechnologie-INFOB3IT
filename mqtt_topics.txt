@@ -6,7 +6,7 @@ infob3it/099
 /sensor/light/level
 /sensor/light/reading
 /sensor/pressure			
-/sensor/temp
+/sensor/temperature
 
 /commands
 
@@ -15,7 +15,9 @@ infob3it/099
 /status/plant_drizzler
 /status/gesture_controller
 
-
-/mode/plant_drizzler
+/mode/plant_drizzler/automated
+/mode/plant_drizzler/experimental
 /mode/gesture_controller
+
+/last_watered
 
