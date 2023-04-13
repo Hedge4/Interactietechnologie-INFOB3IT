@@ -10,11 +10,10 @@ int refreshButtonPin = 12;
 bool prevWaterState = LOW;
 bool prevRefreshState = LOW;
 
-// interval at which buttons get checked
-BlockNot waterButtonInterval(50);
-BlockNot refreshButtonInterval(50);
 // interval at which accelerometer/gyroscope data is updated, so MPU has time to process
 BlockNot mpuLoopInterval(100);
+// interval at which the Arduino sends a ping through its Serial connection to node-red
+BlockNot pingInterval(15000);
 
 
 /* ===========================
@@ -22,14 +21,17 @@ BlockNot mpuLoopInterval(100);
   ========================= */
 
 void sendWaterCommand() {
+  Serial.println(F("water"));
   // TODO
 }
 
 void sendMoreWaterCommand() {
+  Serial.println(F("more_water"));
   // TODO
 }
 
 void sendRefreshCommand() {
+  Serial.println(F("refresh"));
   // TODO
 }
 
@@ -65,26 +67,8 @@ void loop() {
     gestureDetectionLoop();
   }
 
-  // bool waterButtonState = digitalRead(waterButtonPin);
-  // bool refreshButtonState = digitalRead(refreshButtonPin);
-
-  // if (waterButtonState != prevWaterState && waterButtonInterval.triggered()) {
-  //   prevWaterState = waterButtonState;
-  //   digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
-
-  //   if (!waterButtonState) {
-  //     // communicate the command to node-red through the serial connection
-  //     Serial.println(F("water"));
-  //   }
-  // }
-
-  // if (refreshButtonState != prevRefreshState && refreshButtonInterval.triggered()) {
-  //   prevRefreshState = refreshButtonState;
-  //   digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
-
-  //   if (!refreshButtonState) {
-  //     // communicate the command to node-red through the serial connection
-  //     Serial.println(F("refresh"));
-  //   }
-  // }
+  // send ping to node-red flow every x seconds
+  if (pingInterval.triggered()) {
+    Serial.println(F("ping"));
+  }
 }

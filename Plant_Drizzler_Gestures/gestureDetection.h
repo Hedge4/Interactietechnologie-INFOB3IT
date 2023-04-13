@@ -3,7 +3,6 @@
 
 #include "Plant_Drizzler_Gestures.h"
 #include "mpuConnection.h"
-// #include "movementStorageClass.h"
 
 // methods
 void gestureDetectionLoop();
