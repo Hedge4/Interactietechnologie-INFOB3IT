@@ -73,6 +73,8 @@ int warningLimit = 2;                               //amount of warnings device 
 BlockNot warnBlinkInterval(1000);                   //interval at which warning light will blink
 int warnLightPin = D4;                              //pin of warning light
 
+bool clientConnected;                               //indicator if the device is connected to internet
+
 void setup() {
   Serial.begin(9600);
 
@@ -122,7 +124,7 @@ void setup() {
 
 void loop() {
   //mqtt routine
-  boolean clientConnected = mqttLoop();
+  clientConnected = mqttLoop();
   //if(!clientConnected) {
   //  Serial.println("Connectie weg :(");
   //}
@@ -193,6 +195,7 @@ void loop() {
 void waterLoop(){
   //bring machine to watergiving state
   if(   (automaticMode                         // automatic indicator
+    &&  !experimentalMode                      //differentiate with experimental mode
     &&  moistLevel < moistLevelThreshold      // indicator that earth is too dry and needs to be soiled
     &&  !givingWater                           // indicator that machine is not in water-giving state yet
     &&  myArm.available                        // indicator that servo can be used
@@ -207,6 +210,9 @@ void waterLoop(){
     &&  lightLevel < lightLevelThreshold       //dont water in full sunlight
     &&  tempReading > tempThresholdLow         //dont water when too cold
     &&  tempReading < tempThresholdHigh        //or hot
+    &&  !givingWater                           // indicator that machine is not in water-giving state yet
+    &&  myArm.available                        // indicator that servo can be used
+    &&  afterWaterGracePeriod.triggered()      // dont soil plants too fast after last soiling
     )             
     ){
 
@@ -285,13 +291,21 @@ void toggleAutomatic(bool mode){
 
 
 void onButtonChange(const int state){
-  if(state == HIGH && automaticMode && buttonCooldown.triggered()){
+  if(state == HIGH && automaticMode && buttonCooldown.triggered()){    
     //publish the change, callback will handle changing modes
     sendMessage(TOGGLE_FALSE_PUBLISH, modeTopic.c_str(), true);
+    //if device is offline, do it manually
+    if(!clientConnected){
+      toggleAutomatic(false);
+    }
   }
   else if(state == HIGH && !automaticMode && buttonCooldown.triggered()){
     //publish the change, callback will handle changing modes
     sendMessage(TOGGLE_TRUE_PUBLISH, modeTopic.c_str(), true);
+    //if device is offline, do it manually
+    if(!clientConnected){
+      toggleAutomatic(true);
+    }
   }
 }
 
