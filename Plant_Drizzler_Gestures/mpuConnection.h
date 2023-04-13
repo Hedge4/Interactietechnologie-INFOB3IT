@@ -3,6 +3,7 @@
 
 #include <Wire.h>
 #include "Plant_Drizzler_Gestures.h"
+#include "gestureDetection.h"
 
 // methods
 void getMpuValues();

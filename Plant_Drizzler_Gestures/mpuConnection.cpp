@@ -5,14 +5,6 @@
   ===   CONFIGURATION   ===
   ====================== */
 
-// Possible states:
-#define IDLE 0       // Controller isn't being used, default mode
-#define AWAKE 1      // Awaiting gesture initiation
-#define DETECTING 2  // Detecting which gesture was used
-
-int deviceState = 0;
-unsigned long deviceTimestamp = 0;
-
 /*
   Arduino and MPU6050 Accelerometer and Gyroscope Sensor Tutorial
   by Dejan, https:// howtomechatronics.com
@@ -41,7 +33,7 @@ int c = 0;
   ===     FUNCTIONS     ===
   ====================== */
 
-void getValuesloop() {
+void getMpuValues() {
   // === Read accelerometer data === //
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);  // start with register 0x3B (ACCEL_XOUT_H)
@@ -96,8 +88,7 @@ void getValuesloop() {
   // yaw drifts so we make it slightly drift towards 0 as well
   yaw *= 0.99;
 
-  // TODO enable
-  // storeMpuValues(roll, pitch, yaw, correctedAccX, correctedAccY, correctedAccZ);
+  storeMpuValues(roll, pitch, yaw, correctedAccX, correctedAccY, correctedAccZ);
 
   /// Print the values on the serial monitor/plotter
   // Serial.print("accX:");
@@ -227,25 +218,6 @@ void calculateDataEror() {
   Serial.println(gyroErrorZ);
 }
 
-// setup for when we enter a specific state
-void changeDeviceState(int newState) {
-  if (deviceState != newState) {
-    deviceTimestamp = millis();
-    deviceState = newState;
-
-    Serial.print(F("Switched to deviceState "));
-    Serial.println(newState);
-
-    // state initialisation logic
-    switch (newState) {
-      case 0:
-        break;
-      case 1:
-        break;
-    }
-  }
-}
-
 
 /* =========================
   ===   SETUP FUNCTION   ===
@@ -275,30 +247,4 @@ void mpuConnectionSetup() {
 
   // call this function if you need to get the IMU error values for your module
   calculateDataEror();
-}
-
-
-/* ========================
-  ===      GETTERS      ===
-  ====================== */
-
-// TODO implement public methods
-
-
-/* =========================
-  ===        LOOP        ===
-  ======================= */
-
-void getMpuValues() {
-  // update accelerometer and gyroscope output data
-  getValuesloop();
-
-  // TODO implement state logic
-
-  // switch (deviceState) {
-  //   case 0:
-  //     break;
-  //   case 1:
-  //     break;
-  // }
 }

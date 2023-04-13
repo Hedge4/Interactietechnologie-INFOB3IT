@@ -45,8 +45,7 @@ void loop() {
   // interval not just on getting new data but also gesture recognition, since there's no use detecting without new data
   if (mpuLoopInterval.triggered()) {
   // let deviceFunction update our inputs
-    getMpuValues();
-    // detectionLoop();
+    gestureDetectionLoop();
   }
 
   // bool waterButtonState = digitalRead(waterButtonPin);
