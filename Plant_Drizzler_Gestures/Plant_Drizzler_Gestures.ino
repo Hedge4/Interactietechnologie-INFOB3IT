@@ -10,8 +10,6 @@ int refreshButtonPin = 12;
 bool prevWaterState = LOW;
 bool prevRefreshState = LOW;
 
-// interval at which accelerometer/gyroscope data is updated, so MPU has time to process
-BlockNot mpuLoopInterval(100);
 // interval at which the Arduino sends a ping through its Serial connection to node-red
 BlockNot pingInterval(15000);
 
@@ -62,10 +60,8 @@ void setup() {
 
 void loop() {
   // interval not just on getting new data but also gesture recognition, since there's no use detecting without new data
-  if (mpuLoopInterval.triggered()) {
   // let deviceFunction update our inputs
     gestureDetectionLoop();
-  }
 
   // send ping to node-red flow every x seconds
   if (pingInterval.triggered()) {

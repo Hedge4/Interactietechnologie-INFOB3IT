@@ -22,7 +22,7 @@ float accErrorX, accErrorY, accErrorZ, accRangeErrorX, accRangeErrorY;
 float gyroErrorX, gyroErrorY, gyroErrorZ;
 // these are the recorded error margins, so they are SUBTRACTED from the new values to correct them
 float accCorrectionX = 426.75, accCorrectionY = -90.31, accCorrectionZ = -8720.30, accAngleCorrectionX = -0.31, accAngleCorrectionY = -2.81;
-float gyroCorrectionX = 5.77, gyroCorrectionY = -0.12, gyroCorrectionZ = -0.67;
+float gyroCorrectionX = 11.52, gyroCorrectionY = -0.12, gyroCorrectionZ = -1.08;
 unsigned long currTime, prevTime;
 float elapsedMillis;
 #define ELAPSED_SECONDS elapsedMillis/1000
@@ -124,14 +124,14 @@ void getMpuValues() {
   // Serial.print("gyroZ:");
   // Serial.println(gyroZ);
   
-  Serial.print("roll:");
-  Serial.print(roll);
-  Serial.print(",");
-  Serial.print("pitch:");
-  Serial.print(pitch);
-  Serial.print(",");
-  Serial.print("yaw:");
-  Serial.println(yaw);
+  // Serial.print("roll:");
+  // Serial.print(roll);
+  // Serial.print(",");
+  // Serial.print("pitch:");
+  // Serial.print(pitch);
+  // Serial.print(",");
+  // Serial.print("yaw:");
+  // Serial.println(yaw);
   
   // Serial.print("speedX:");
   // Serial.print(speedX);
