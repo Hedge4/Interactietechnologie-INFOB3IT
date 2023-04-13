@@ -33,8 +33,6 @@
 #define TOGGLE_TRUE_RECEIVE   '1'
 #define TOGGLE_FALSE_RECEIVE  '0'
 
-
-
 extern SSD1306Wire display;
 extern OLEDDisplayUi ui;
 
@@ -47,7 +45,7 @@ extern float tempReading;
 extern float pressureReading;
 extern int lightLevel;
 extern int moistLevel;
-extern unsigned long lastWatered;
+extern float lastWatered;
 
 extern int selPin;
 extern int aPin;

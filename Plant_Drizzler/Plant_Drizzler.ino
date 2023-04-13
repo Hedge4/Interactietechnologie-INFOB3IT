@@ -34,12 +34,12 @@ int moistReadBuffer = 150;                          //can only get data after at
 BlockNot moistInterval(moistIntervalLong);          //interval at which moisture sensor gets checked, should not be lower than ldr
 BlockNot ldrInterval(100);                          //interval at which light gets checked 
 BlockNot bmpInterval(3000);                         //interval at which pressure and temperature gets checked
-BlockNot publishSensorsInterval(5000);              //interval at which all sensorvalues will be published periodically
+BlockNot publishSensorsInterval(20000);              //interval at which all sensorvalues will be published periodically
 
 //plant watering vars
 int moistLevelThreshold = 2;                        //if soil gets below moistness 2, apply water
 bool givingWater;                                   //indicator that machine is in water giving state
-unsigned long lastWatered;                          //remember when last given water
+float lastWatered;                          //remember when last given water
 bool forceGiveWater;                                //for manual mode, gives signal that water must be given in this cycle
 
 //retrieve sensor command vars
@@ -91,7 +91,7 @@ void setup() {
   myArm.moveToStart();
 
   //initialise lastwatered
-  lastWatered = millis();
+  lastWatered = 0;
 
   //setup function that happens when buttonstate changes
   toggleButton.setCallback(onButtonChange);
@@ -110,9 +110,9 @@ void setup() {
 void loop() {
   //mqtt routine
   boolean clientConnected = mqttLoop();
-  if(!clientConnected) {
-    Serial.println("Connectie weg :(");
-  }
+  //if(!clientConnected) {
+  //  Serial.println("Connectie weg :(");
+  //}
 
   //check for button updates and change accordingly in callback function
   toggleButton.update();
@@ -205,7 +205,8 @@ void waterLoop(){
     if(myArm.available && !dispensing){
       //Serial.println("4. WATERING COMPLETED");
       //remember time this happened
-      lastWatered = millis();
+      unsigned long curTime = millis();
+      lastWatered = (curTime - lastWatered) / 1000.0 / 60.0;
       givingWater = false;
       //start grace period with reset timer
       afterWaterGracePeriod.start(true);  
@@ -213,10 +214,11 @@ void waterLoop(){
       moistInterval.setDuration(moistIntervalShort);
       //turn of forced flag if it was on
       forceGiveWater = false;
+      //publish that plant has been watered
+      performWateredPing();
     }
   }
 }
-
 
 //turn on or off automatic (if not automatic, turn on manual)
 //otherwise change to automatic mode
@@ -280,8 +282,18 @@ void performSensorPing(){
   sendMessage(String(moistLevel).c_str(), moistLevelTopic.c_str());
   sendMessage(String(ldrReading).c_str(), lightReadingTopic.c_str());
   sendMessage(String(lightLevel).c_str(), lightLevelTopic.c_str());
-  sendMessage(String(pressureReading).c_str(), pressureTopic.c_str());
   sendMessage(String(tempReading).c_str(), temperatureTopic.c_str());
+  sendMessage(String(pressureReading).c_str(), pressureTopic.c_str());
+}
+
+//publish time since last watering
+void performWateredPing(){
+  unsigned long curTime = millis();
+  //convert to minutes
+  float timeDiff = curTime / 1000.0 / 60.0; 
+                                //append units (helps with displaying but ruins data)
+  String msg = String(timeDiff);//+ " minutes ago";
+  sendMessage(msg.c_str(), lastWateredTopic.c_str());
 }
 
 

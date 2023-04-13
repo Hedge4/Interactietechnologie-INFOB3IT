@@ -20,13 +20,14 @@ void watercanOverlay(OLEDDisplay *display, OLEDDisplayUiState* state) {
 }
 
 void drawStartFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  int mins = millis() / 1000 / 60;
+  float mins = (float) millis() / 1000.0 / 60.0;
+  String minsMsg = String(mins) + "minutes";
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
   display->drawString(0 + x, 11 + y, "Plant Drizzler 9000");
   display->drawString(0 + x, 21 + y, "Keeping your plant alive for");
-  display->drawString(0 + x, 31 + y, String(mins));
-  display->drawString(0 + x, 41 + y, "minutes since powering");
+  display->drawString(0 + x, 31 + y, String(minsMsg));
+  display->drawString(0 + x, 41 + y, "since powering");
 }
 
 void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
@@ -44,6 +45,9 @@ void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, i
     case 3:
       msgMoist = "Very Wet";
       break;
+    default:
+      msgMoist = "";
+      break;  
   }
   String msgLight;
   switch(lightLevel){
@@ -59,6 +63,9 @@ void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, i
     case 3:
       msgLight = "Very Light";
       break;
+    default:
+      msgLight = "";
+      break;  
   }
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
@@ -68,9 +75,8 @@ void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, i
   display->drawString(0 + x, 41 + y, msgLight);
 }
 void drawBmpFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  //String msgTemp = String(tempReading);
   String msgTemp = String(tempReading) + String(" *C");
-  String msgPressure = String(pressureReading / 100000) + String(" bar");
+  String msgPressure = String(pressureReading) + String(" bar");
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
   display->drawString(0 + x, 11 + y, "Temperature");
@@ -79,8 +85,7 @@ void drawBmpFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, in
   display->drawString(0 + x, 41 + y, msgPressure);
 }
 void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, int16_t y) {
-  //String msgTemp = String(tempReading);
-  String msgLastWater = String(lastWatered) + String(" minutes");
+  String msgLastWater = String(lastWatered) + String(" minutes ago");
   display->setTextAlignment(TEXT_ALIGN_LEFT);
   display->setFont(ArialMT_Plain_10);
   display->drawString(0 + x, 11 + y, "Time since last watering");
@@ -94,6 +99,7 @@ void drawTreatmentFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t
 
 //method containing config of screen and ui
 void oledSetup(){
+  //ui setup
   ui.setTargetFPS(30);
   ui.setActiveSymbol(activeSymbol);
   ui.setInactiveSymbol(inactiveSymbol);
@@ -103,6 +109,7 @@ void oledSetup(){
   ui.setFrames(frames, frameCount);
   ui.setOverlays(overlays, overlaysCount);
   ui.setTimePerTransition(1000);
+  ui.setTimePerFrame(10000);
   ui.init();
   display.flipScreenVertically();
 }

@@ -14,14 +14,15 @@ const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 
 //hardcoded topic strings
 String commandTopicPrefixed = String(MQTT_TOPIC_PREFIX) +"/commands";
-String modeTopic            = "/mode/plant_drizzler";
 String modeTopicPrefixed    = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler";
+String modeTopic            = "/mode/plant_drizzler";
 String moistReadingTopic    = "/sensor/moisture/reading";
 String moistLevelTopic      = "/sensor/moisture/level";
 String lightReadingTopic    = "/sensor/light/reading";
 String lightLevelTopic      = "/sensor/light/level";
 String pressureTopic        = "/sensor/pressure";
 String temperatureTopic     = "/sensor/temperature";
+String lastWateredTopic     = "/last_watered";
 
 
 /* ========================

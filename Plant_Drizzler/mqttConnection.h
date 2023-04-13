@@ -19,7 +19,8 @@ void sendMessage(const char* message, const char *topic, bool retain = false);
 extern String modeTopic,          commandTopic, 
               moistReadingTopic,  moistLevelTopic, 
               lightReadingTopic,  lightLevelTopic,
-              pressureTopic,      temperatureTopic; 
+              pressureTopic,      temperatureTopic,
+              lastWateredTopic; 
 //extern const String subscribeTopic, statusTopic;              
 
 

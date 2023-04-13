@@ -41,7 +41,7 @@ void checkAmuxSensors(){
 void checkBmpSensors(){
   if(bmpInterval.triggered()){
     tempReading = bmp.readTemperature();
-    pressureReading = bmp.readPressure();
+    pressureReading = bmp.readPressure() / 100000;
   }
 }
 
