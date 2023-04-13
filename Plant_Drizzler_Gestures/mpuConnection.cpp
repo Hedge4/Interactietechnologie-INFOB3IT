@@ -9,13 +9,13 @@
   Arduino and MPU6050 Accelerometer and Gyroscope Sensor Tutorial
   by Dejan, https:// howtomechatronics.com
 */
-const int MPU = 0x68;  // MPU6050 I2C address
-float accX, accY, accZ; // acceleration
-float correctedAccX, correctedAccY, correctedAccZ; // acceleration corrected towards zero (when motionless)
+const int MPU = 0x68;                               // MPU6050 I2C address
+float accX, accY, accZ;                             // acceleration
+float correctedAccX, correctedAccY, correctedAccZ;  // acceleration corrected towards zero (when motionless)
 // float speedX, speedY, speedZ; // velocity
-float gyroX, gyroY, gyroZ; // degrees/s
-float accAngleX, accAngleY; // degrees, from accelerometer data
-float roll, pitch, yaw; // degrees, mostly from gyroscope data
+float gyroX, gyroY, gyroZ;   // degrees/s
+float accAngleX, accAngleY;  // degrees, from accelerometer data
+float roll, pitch, yaw;      // degrees, mostly from gyroscope data
 // for calculating error values (on startup) in a motionless state, which can then be used to set the correction values
 // !important: values aren't updated automatically, but have to be tested/set by the developer for each device
 float accErrorX, accErrorY, accErrorZ, accRangeErrorX, accRangeErrorY;
@@ -25,7 +25,7 @@ float accCorrectionX = 426.75, accCorrectionY = -90.31, accCorrectionZ = -8720.3
 float gyroCorrectionX = 11.52, gyroCorrectionY = -0.12, gyroCorrectionZ = -1.08;
 unsigned long currTime, prevTime;
 float elapsedMillis;
-#define ELAPSED_SECONDS elapsedMillis/1000
+#define ELAPSED_SECONDS elapsedMillis / 1000
 int c = 0;
 
 
@@ -40,9 +40,9 @@ void getMpuValues() {
   Wire.endTransmission(false);
   Wire.requestFrom(MPU, 6, true);  // read 6 registers total, each axis value is stored in 2 registers
   // for a range of +-2g, we need to divide the raw values by 16384, according to the datasheet
-  accX = (Wire.read() << 8 | Wire.read()); // X-axis value
-  accY = (Wire.read() << 8 | Wire.read()); // Y-axis value
-  accZ = (Wire.read() << 8 | Wire.read()); // Z-axis value
+  accX = (Wire.read() << 8 | Wire.read());  // X-axis value
+  accY = (Wire.read() << 8 | Wire.read());  // Y-axis value
+  accZ = (Wire.read() << 8 | Wire.read());  // Z-axis value
 
   // for ease of use in gesture detection we correct acceleration towards zero
   correctedAccX = accX - accCorrectionX;
@@ -99,15 +99,16 @@ void getMpuValues() {
   // Serial.print(",");
   // Serial.print("accZ:");
   // Serial.println(accZ);
-  
-  // Serial.print("correctedAccX:");
-  // Serial.print(correctedAccX);
-  // Serial.print(",");
-  // Serial.print("correctedAccY:");
-  // Serial.print(correctedAccY);
-  // Serial.print(",");
-  // Serial.print("correctedAccZ:");
-  // Serial.println(correctedAccZ);
+
+  Serial.print("correctedAccX:");
+  Serial.print(correctedAccX);
+  Serial.print(",");
+  Serial.print("correctedAccY:");
+  Serial.print(correctedAccY);
+  Serial.print(",");
+  Serial.print("correctedAccZ:");
+  Serial.println(correctedAccZ);
+  Serial.print(",");
 
   // Serial.print("accAngleX:");
   // Serial.print(accAngleX);
@@ -123,16 +124,16 @@ void getMpuValues() {
   // Serial.print(",");
   // Serial.print("gyroZ:");
   // Serial.println(gyroZ);
-  
-  // Serial.print("roll:");
-  // Serial.print(roll);
-  // Serial.print(",");
-  // Serial.print("pitch:");
-  // Serial.print(pitch);
-  // Serial.print(",");
-  // Serial.print("yaw:");
-  // Serial.println(yaw);
-  
+
+  Serial.print("roll:");
+  Serial.print(roll);
+  Serial.print(",");
+  Serial.print("pitch:");
+  Serial.print(pitch);
+  Serial.print(",");
+  Serial.print("yaw:");
+  Serial.println(yaw);
+
   // Serial.print("speedX:");
   // Serial.print(speedX);
   // Serial.print(",");

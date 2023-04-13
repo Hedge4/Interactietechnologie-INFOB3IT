@@ -42,7 +42,7 @@ void setup() {
   // led is on during setup
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  
+
   // for logging purposes
   Serial.begin(9600);
 
@@ -61,7 +61,7 @@ void setup() {
 void loop() {
   // interval not just on getting new data but also gesture recognition, since there's no use detecting without new data
   // let deviceFunction update our inputs
-    gestureDetectionLoop();
+  gestureDetectionLoop();
 
   // send ping to node-red flow every x seconds
   if (pingInterval.triggered()) {
