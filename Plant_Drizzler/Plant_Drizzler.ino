@@ -73,12 +73,17 @@ int warningLimit = 2;                               //amount of warnings device 
 BlockNot warnBlinkInterval(1000);                   //interval at which warning light will blink
 int warnLightPin = D4;                              //pin of warning light
 
-bool clientConnected;                               //indicator if the device is connected to internet
+bool clientConnected;                               //indicator if the device is connected to the broker
+BlockNot reconnectInterval(5000);                   //wait a couple of seconds between connection attempts to broker
+bool wifiConnected;
+BlockNot internetConnectInterval(500);              //wait between connection attempts to internet
+
 
 void setup() {
   Serial.begin(9600);
 
   //mqtt setup
+  wifiConnected = false;
   setupWifi();
   setupMqtt();
 
@@ -123,6 +128,12 @@ void setup() {
 }
 
 void loop() {
+
+  //non blockingly connect to the internet
+  if(!wifiConnected){
+    wifiConnected = setupWifiInLoop();
+  }
+
   //mqtt routine
   clientConnected = mqttLoop();
   //if(!clientConnected) {
@@ -176,8 +187,11 @@ void loop() {
   waterLoop();
 
   //if amount of times moisture did not change exceed a threshold, no water is assumed to be in resevoir
-  //dont do this whilst giving water
-  if(warningTicks > warningLimit && !givingWater && warnBlinkInterval.triggered()){
+  if(warningTicks > warningLimit 
+  && !givingWater 
+  && warnBlinkInterval.triggered()
+  && moistLevel < moistLevelThreshold                     //check if it is not just permanently very wet
+  ){
     if(digitalRead(warnLightPin) == HIGH){
       digitalWrite(warnLightPin, LOW);
     }

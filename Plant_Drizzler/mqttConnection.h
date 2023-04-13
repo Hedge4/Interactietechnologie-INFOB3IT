@@ -12,6 +12,7 @@
 void setupWifi();
 void setupMqtt();
 boolean mqttLoop();
+bool setupWifiInLoop();
 
 void sendMessage(const char *payload, bool retain = false);
 void sendMessage(const char* message, const char *topic, bool retain = false);
