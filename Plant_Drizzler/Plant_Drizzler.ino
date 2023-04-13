@@ -87,8 +87,6 @@ void setup() {
   setupWifi();
   setupMqtt();
 
-  // allow the MQTT client to sort itself out
-  delay(3000);
 
   //OLED setup
   oledSetup();
