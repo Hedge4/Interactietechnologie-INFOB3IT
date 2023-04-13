@@ -75,7 +75,7 @@ void mqttReconnect() {
     Serial.print(client.state());
     Serial.println(" - trying again in 5 seconds");
     // wait 5 seconds before retrying
-    delay(5000);
+    //delay(5000);
   }
 }
 
