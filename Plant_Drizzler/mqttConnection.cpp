@@ -61,25 +61,21 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 void mqttReconnect() {
-  // TODO probably better to make this non-blocking
-
-  // loop until we're reconnected
-  while (!client.connected()) {
-    Serial.print("Attempting MQTT connection... ");
-    // attempt to connect
-    if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD, statusTopic.c_str(), 0, true, "Offline")) {
-      Serial.println("connected!");
-      // Once connected, publish an announcement...
-      client.publish(statusTopic.c_str(), "Online", true);
-      // ... and resubscribe
-      client.subscribe(subscribeTopic.c_str());
-    } else {
-      Serial.print("failed, rc=");
-      Serial.print(client.state());
-      Serial.println(" - trying again in 5 seconds");
-      // wait 5 seconds before retrying
-      delay(5000);
-    }
+  //try once to reconnect
+  Serial.println("Attempting MQTT connection... ");
+  // attempt to connect
+  if (client.connect(MQTT_CLIENT_ID, MQTT_USERNAME, MQTT_PASSWORD, statusTopic.c_str(), 0, true, "Offline")) {
+    Serial.println("connected!");
+    // Once connected, publish an announcement...
+    client.publish(statusTopic.c_str(), "Online", true);
+    // ... and resubscribe
+    client.subscribe(subscribeTopic.c_str());
+  } else {
+    Serial.print("failed, rc=");
+    Serial.print(client.state());
+    Serial.println(" - trying again in 5 seconds");
+    // wait 5 seconds before retrying
+    //delay(5000);
   }
 }
 
@@ -95,18 +91,22 @@ void setupWifi() {
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+}
 
-  // TODO this is blocking, which it probably shouldn't be
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+bool setupWifiInLoop(){
+  if(internetConnectInterval.triggered()){
+    if(WiFi.status() != WL_CONNECTED){
+      return false;      
+    }
+    else {
+      Serial.println("WiFi connected");
+      Serial.print("IP address: ");
+      Serial.println(WiFi.localIP());
+      Serial.println();
+      return true;
+    }        
   }
-
-  Serial.println("\n");
-  Serial.println("WiFi connected");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-  Serial.println();
+  return false;  
 }
 
 void setupMqtt() {
@@ -147,7 +147,7 @@ void sendMessage(const char *payload, const char *topic, bool retain) {
 // returns whether the client is connected or not
 boolean mqttLoop() {
   // make sure we are connected to the MQTT broker
-  if (!client.connected()) {
+  if (!client.connected() && reconnectInterval.triggered()) {
     mqttReconnect();
   }
 

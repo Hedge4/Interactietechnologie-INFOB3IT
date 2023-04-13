@@ -60,6 +60,9 @@ extern BlockNot moistDebouncing;
 
 extern bool givingWater;
 
+extern BlockNot internetConnectInterval;
+extern BlockNot reconnectInterval;
+
 void performCommand(char command);
 void performModeToggle(char mode);
 void performExperimentalToggle(char mode);
