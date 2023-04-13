@@ -1,5 +1,9 @@
-// stuff to include:
 #include "Plant_Drizzler_Gestures.h"
+
+
+/* ========================
+  ===   CONFIGURATION   ===
+  ====================== */
 
 int waterButtonPin = 11;
 int refreshButtonPin = 12;
@@ -10,8 +14,12 @@ bool prevRefreshState = LOW;
 BlockNot waterButtonInterval(50);
 BlockNot refreshButtonInterval(50);
 // interval at which accelerometer/gyroscope data is updated, so MPU has time to process
-BlockNot mpuLoopInterval(50);
+BlockNot mpuLoopInterval(100);
 
+
+/* =========================
+  ===     MAIN SETUP     ===
+  ======================= */
 
 void setup() {
   // led is on during setup
@@ -21,40 +29,46 @@ void setup() {
   // for logging purposes
   Serial.begin(9600);
 
-  gestureDetectionSetup();
+  // mpuConnectionSetup();
+  mpuConnectionSetup();
 
   // disable setup led
   digitalWrite(LED_BUILTIN, LOW);
 }
 
 
+/* ========================
+  ===     MAIN LOOP     ===
+  ====================== */
+
 void loop() {
   // interval not just on getting new data but also gesture recognition, since there's no use detecting without new data
   if (mpuLoopInterval.triggered()) {
   // let deviceFunction update our inputs
-    deviceLoop();
+    getMpuValues();
+    // detectionLoop();
   }
 
-  bool waterButtonState = digitalRead(waterButtonPin);
-  bool refreshButtonState = digitalRead(refreshButtonPin);
+  // bool waterButtonState = digitalRead(waterButtonPin);
+  // bool refreshButtonState = digitalRead(refreshButtonPin);
 
-  if (waterButtonState != prevWaterState && waterButtonInterval.triggered()) {
-    prevWaterState = waterButtonState;
-    digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
+  // if (waterButtonState != prevWaterState && waterButtonInterval.triggered()) {
+  //   prevWaterState = waterButtonState;
+  //   digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
 
-    if (!waterButtonState) {
-      // communicate the command to node-red through the serial connection
-      Serial.println(F("water"));
-    }
-  }
+  //   if (!waterButtonState) {
+  //     // communicate the command to node-red through the serial connection
+  //     Serial.println(F("water"));
+  //   }
+  // }
 
-  if (refreshButtonState != prevRefreshState && refreshButtonInterval.triggered()) {
-    prevRefreshState = refreshButtonState;
-    digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
+  // if (refreshButtonState != prevRefreshState && refreshButtonInterval.triggered()) {
+  //   prevRefreshState = refreshButtonState;
+  //   digitalWrite(LED_BUILTIN, !refreshButtonState || !waterButtonState);
 
-    if (!refreshButtonState) {
-      // communicate the command to node-red through the serial connection
-      Serial.println(F("refresh"));
-    }
-  }
+  //   if (!refreshButtonState) {
+  //     // communicate the command to node-red through the serial connection
+  //     Serial.println(F("refresh"));
+  //   }
+  // }
 }
