@@ -81,15 +81,14 @@ BlockNot internetConnectInterval(500);              //wait between connection at
 
 void setup() {
   Serial.begin(9600);
+  
+  //OLED setup
+  oledSetup();
 
   //mqtt setup
   wifiConnected = false;
   setupWifi();
   setupMqtt();
-
-
-  //OLED setup
-  oledSetup();
 
   //bmp setup
   unsigned status;
@@ -126,6 +125,9 @@ void setup() {
 }
 
 void loop() {
+
+  //update the oled according to oled refresh rate
+  updateOLED();
 
   //non blockingly connect to the internet
   if(!wifiConnected){
@@ -198,8 +200,7 @@ void loop() {
     }
   }
 
-  //update the oled according to oled refresh rate
-  updateOLED();
+
 
 }
 
