@@ -100,14 +100,14 @@ void getMpuValues() {
   // Serial.print("accZ:");
   // Serial.println(accZ);
   
-  // Serial.print("correctedAccX:");
-  // Serial.print(correctedAccX);
-  // Serial.print(",");
-  // Serial.print("correctedAccY:");
-  // Serial.print(correctedAccY);
-  // Serial.print(",");
-  // Serial.print("correctedAccZ:");
-  // Serial.println(correctedAccZ);
+  Serial.print("correctedAccX:");
+  Serial.print(correctedAccX);
+  Serial.print(",");
+  Serial.print("correctedAccY:");
+  Serial.print(correctedAccY);
+  Serial.print(",");
+  Serial.print("correctedAccZ:");
+  Serial.println(correctedAccZ);
 
   // Serial.print("accAngleX:");
   // Serial.print(accAngleX);

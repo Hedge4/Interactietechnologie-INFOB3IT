@@ -15,6 +15,15 @@
 int deviceState = 0;
 unsigned long deviceTimestamp = 0;
 
+// we store the latest rotation/acceleration values for our detection functions
+float roll, pitch, yaw, accX, accY, accZ;
+
+// initialisation gesture thresholds
+float initThresholdAccX;
+float initThresholdAccX;
+float initThresholdAccX;
+float initThresholdPitch;
+
 
 /* ========================
   ===     FUNCTIONS     ===
@@ -45,8 +54,21 @@ void changeDeviceState(int newState) {
   }
 }
 
-void storeMpuValues(float roll, float pitch, float yaw, float correctedAccX, float correctedAccY, float correctedAccZ) {
-  // TODO
+
+/* ==============================
+  ===   DETECTION FUNCTIONS   ===
+  ============================ */
+
+void detectInitialisation() {
+  //
+}
+
+void detectInitialisation() {
+  //
+
+}
+void detectInitialisation() {
+  //
 }
 
 
@@ -55,6 +77,16 @@ void storeMpuValues(float roll, float pitch, float yaw, float correctedAccX, flo
   ====================== */
 
 // TODO implement public methods
+// or probably just implement external functions in main file?
+
+
+/* =============================
+  ===   EXTERNAL FUNCTIONS   ===
+  =========================== */
+
+void storeMpuValues(float roll, float pitch, float yaw, float accX, float accY, float accZ) {
+  //
+}
 
 
 /* =========================
@@ -64,6 +96,8 @@ void storeMpuValues(float roll, float pitch, float yaw, float correctedAccX, flo
 void gestureDetectionLoop() {
   // update accelerometer and gyroscope output data
   getMpuValues();
+
+
 
   // TODO implement state logic
   switch (deviceState) {
