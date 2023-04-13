@@ -6,20 +6,25 @@
   ====================== */
 
 // Possible states:
-#define IDLE        0 // Controller isn't being used, default mode
-#define ACTIVATING  1 // In grace period before becoming activated
-#define ACTIVATED   2 // Awaiting gesture initiation
-#define DETECTING   3 // Detecting which gesture was used
-#define DETECTED    4 // Finished detecting a gesture, in grace period
+#define IDLE 0        // Controller isn't being used, default mode
+#define ACTIVATING 1  // In grace period before becoming activated
+#define ACTIVATED 2   // Awaiting gesture initiation
+#define DETECTING 3   // Detecting which gesture was used
+#define DETECTED 4    // Finished detecting a gesture, in grace period
 
-int deviceState = DETECTING; // TODO set to IDLE
+int deviceState = DETECTING;  // TODO set to IDLE
 unsigned long deviceTimestamp = 0;
 
-int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED or ACTIVATED --> IDLE
+int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED
+int idleDelay = 30000;                // delay for ACTIVATED --> IDLE
 int maxDetectionTime = 10000;         // time a user has to make their gesture in DETECTING state
 boolean ledState;                     // used for blinking led
 BlockNot graceLedInterval(200);       // how fast the led blinks while awaiting state change
 BlockNot dectectionLedInterval(500);  // led blink interval in DETECTING state
+BlockNot motionDetection(500);        // how often the device should check for motion
+
+BlockNot mpuLoopInterval(100);      // interval at which accelerometer/gyroscope data is updated
+BlockNot mpuIdleLoopInterval(500);  // same thing but in IDLE state
 
 // we store the last x rotation/acceleration values for our detection functions
 const int maxValuesStored = 5;
@@ -29,10 +34,22 @@ float lastRolls[maxValuesStored], lastPitches[maxValuesStored], lastYaws[maxValu
 int lastValueIterator;
 
 // initialisation (bend hand down, and back up) detection variables
-int initDetectionStage;
-int initBeginValue;
+int initDetectionState;
+int initStartValue;
 int initMoveValue;
-int initReturnValue;
+int initEndValue;
+
+// refresh (swipe left/right or opposite) detection variables
+int refreshDetectionState;
+int refreshStartValue;
+int refreshMoveValue;
+int refreshEndValue;
+
+// watering (rotate arm 180 degrees and back) detection variables
+int waterStartValue;
+int waterHalfwayValue;
+unsigned long waterGesturetimestamp;  // to store how long someone keeps the halfway position
+int waterCommand;                     // give the result if someone kept position for a short/long time
 
 
 /* ========================
@@ -53,7 +70,7 @@ void changeDeviceState(int newState) {
       case IDLE:
         digitalWrite(LED_BUILTIN, LOW);
         break;
-        
+
       case ACTIVATING:
         digitalWrite(LED_BUILTIN, HIGH);
         ledState = true;
@@ -62,13 +79,14 @@ void changeDeviceState(int newState) {
       case ACTIVATED:
         digitalWrite(LED_BUILTIN, LOW);
         // reset variables used in ACTIVATED state
-        initDetectionStage = initBeginValue = initMoveValue = initReturnValue = 0;
+        initDetectionState = initStartValue = initMoveValue = initEndValue = 0;
         break;
 
       case DETECTING:
         digitalWrite(LED_BUILTIN, HIGH);
         ledState = true;
         // reset variables used in DETECTING state
+        refreshDetectionState = refreshStartValue = refreshMoveValue = refreshEndValue = 0;
         // TODO change variables from detecting to 0
         break;
 
@@ -80,10 +98,11 @@ void changeDeviceState(int newState) {
   }
 }
 
-float getArrayAverage(float *arr, int size) {
+float getArrayAverageAbs(float *arr, int size) {
+  // get average of absolute values because for simplicity we only work with positive values
   float sum = 0;
   for (int i = 0; i < size; i++) {
-    sum += arr[i];
+    sum += abs(arr[i]);
   }
   return sum / size;
 }
@@ -94,8 +113,18 @@ float getArrayAverage(float *arr, int size) {
   ============================ */
 
 boolean motionDetected() {
-  return true;
-  // TODO
+  // we use <= instead of < to enforce casting the average to an int
+  if (
+    (getArrayAverageAbs(lastRolls, maxValuesStored) > 10)
+      + (getArrayAverageAbs(lastPitches, maxValuesStored) > 10)
+      + (getArrayAverageAbs(lastYaws, maxValuesStored) > 10)
+      + (getArrayAverageAbs(lastAccXs, maxValuesStored) > 4000)
+      + (getArrayAverageAbs(lastAccYs, maxValuesStored) > 4000)
+      + (getArrayAverageAbs(lastAccZs, maxValuesStored) > 4000)
+    // if any of these, there is some movement, but we require two to weed out false positives
+    >= 2) return true;
+  else return false;
+  // we could also detect outliers to detect change, but this works just as well
 }
 
 boolean detectInitialisation() {
@@ -105,58 +134,132 @@ boolean detectInitialisation() {
   float lastAccY = lastAccYs[lastValueIterator];
   float lastAccZ = lastAccZs[lastValueIterator];
 
-  if (initDetectionStage == 0 || initDetectionStage == 1) {
-    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 1000) {
-      initBeginValue = initBeginValue < 25 ? initBeginValue + 2 : 26; // max value 26
+  // hand needs to be stable before we start detecting the actual required movement for this gesture
+  if (initDetectionState == 0 || initDetectionState == 1) {
+    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 5000) {
+      initStartValue = initStartValue < 25 ? initStartValue + 2 : 26;  // max value 26
     } else {
-      initBeginValue = --initBeginValue < 0 ? 0 : initBeginValue;
+      initStartValue = --initStartValue < 0 ? 0 : initStartValue;
     }
-    if (initBeginValue > 10) {
-      initDetectionStage = 1;
+    if (initStartValue > 10) {
+      initDetectionState = 1;
     } else {
       // reset if gesture wasn't fast enough
-      initDetectionStage = 0;
+      initDetectionState = 0;
       initMoveValue = 0;
-      initReturnValue = 0;
+      initEndValue = 0;
     }
   }
 
-  if (initDetectionStage == 1 || initDetectionStage == 2) {
+  // detect the actual movement for this gesture
+  if (initDetectionState == 1 || initDetectionState == 2) {
     if (abs(lastAccX) > 6000 && abs(lastAccZ) > 3000 && abs(lastPitch) > 20) {
-      initMoveValue = initMoveValue < 13 ? initMoveValue + 3 : 15; // max value 15
+      initMoveValue = initMoveValue < 13 ? initMoveValue + 3 : 15;  // max value 15
     } else {
       initMoveValue = --initMoveValue < 0 ? 0 : initMoveValue;
     }
     if (initMoveValue > 8) {
-      initDetectionStage = 2;
+      initDetectionState = 2;
     } else if (initMoveValue < 3) {
-      initReturnValue = 0;
+      initEndValue = 0;
     }
   }
 
-  if (initDetectionStage == 2) {
+  // we want at least 3 stable ticks after the movement to end the gesture
+  if (initDetectionState == 2) {
     // don't use pitch here since it doesn't go back to 0 fast enough
-    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 1000) {
-      initReturnValue++;
+    if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 5000) {
+      initEndValue++;
     } else {
-      initReturnValue = --initReturnValue < 0 ? 0 : initReturnValue;
+      initEndValue = --initEndValue < 0 ? 0 : initEndValue;
     }
     // when hand stops moving...
     if (initMoveValue < 4) {
-      if (initReturnValue >= 3) {
+      if (initEndValue >= 3) {
         // gesture detected only if hand is now back in normal position
-        return true; // no need to reset any variables, state change does that
+        return true;  // no need to reset any variables, state change does that
       } else {
         // not detected if hand ends in different position
         initMoveValue = 0;
-        initBeginValue = initReturnValue;
-        initReturnValue = 0;
-        initDetectionStage = 0;
+        initStartValue = initEndValue;
+        initEndValue = 0;
+        initDetectionState = 0;
       }
     }
   }
-
+  // return false if not detected
   return false;
+}
+
+boolean detectRefreshGesture() {
+  // (absolute) average of the most recently saved sideways acceleration values
+  float avgAccX = getArrayAverageAbs(lastAccXs, maxValuesStored);
+  float avgAccY = getArrayAverageAbs(lastAccYs, maxValuesStored);
+  float avgAccZ = getArrayAverageAbs(lastAccZs, maxValuesStored);
+
+  // we need enough stable ticks before we start detecting the required movement for this gesture
+  if (refreshDetectionState == 0 || refreshDetectionState == 1) {
+    if (avgAccX < 2000 && avgAccY < 2000 && avgAccZ < 2500) {
+      refreshStartValue = refreshStartValue < 25 ? refreshStartValue + 2 : 26;  // max value 26
+    } else {
+      refreshStartValue = --refreshStartValue < 0 ? 0 : refreshStartValue;
+    }
+    if (refreshStartValue > 10) {
+      refreshDetectionState = 1;
+    } else {
+      // reset if gesture wasn't fast enough
+      refreshDetectionState = 0;
+      refreshMoveValue = 0;
+      refreshEndValue = 0;
+    }
+  }
+
+  // we want to detect strong sideways acceleration (or deceleration) for at least 4 ticks
+  if (refreshDetectionState == 1 || refreshDetectionState == 2) {
+    if (avgAccY > 3000) {
+      refreshMoveValue = refreshMoveValue < 11 ? refreshMoveValue + 2 : 12;  // max value 12
+    } else {
+      refreshMoveValue = --refreshMoveValue < 0 ? 0 : refreshMoveValue;
+    }
+    if (refreshMoveValue >= 8) {
+      refreshDetectionState = 2;
+    } else if (refreshMoveValue < 3) {
+      refreshEndValue = 0;
+    }
+  }
+
+  // we want at least 3 stable ticks before refreshMoveValue goes too far back down (in 6-10 ticks)
+  if (refreshDetectionState == 2) {
+    // don't use pitch here since it doesn't go back to 0 fast enough
+    if (avgAccX < 2000 && avgAccY < 2000 && avgAccZ < 2500) {
+      refreshEndValue++;
+    } else {
+      refreshEndValue = --refreshEndValue < 0 ? 0 : refreshEndValue;
+    }
+    // when hand stops moving...
+    if (refreshMoveValue < 4) {
+      if (refreshEndValue >= 3) {
+        // gesture detected only if hand is now back in normal position
+        return true;  // no need to reset any variables, state change does that
+      } else {
+        // not detected if hand ends in different position
+        refreshMoveValue = 0;
+        refreshStartValue = refreshEndValue;
+        refreshEndValue = 0;
+        refreshDetectionState = 0;
+      }
+    }
+  }
+  // return false if not detected
+  return false;
+}
+
+int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ) {
+
+  
+  
+  // if not in position return false
+  return 0;
 }
 
 // returns 1 if detected, or 2 if 'more water' gesture detected
@@ -165,13 +268,6 @@ int detectWaterGesture() {
 
   // return 0 if not detected
   return 0;
-}
-
-boolean detectRefreshGesture() {
-  // TODO
-
-  // return false if not detected
-  return false;
 }
 
 
@@ -197,15 +293,25 @@ void storeMpuValues(float roll, float pitch, float yaw, float accX, float accY, 
   ======================= */
 
 void gestureDetectionLoop() {
+  // limit how often the MPU is read and data is interpreted
+  if (deviceState == IDLE) {
+    // in idle state we don't need to be as active
+    if (!mpuIdleLoopInterval.triggered()) return;
+  } else {
+    if (!mpuLoopInterval.triggered()) return;
+  }
+
   // update accelerometer and gyroscope output data
   getMpuValues();
 
+
   // TODO remove test functions
-  // Serial.print("Motion:");
-  // Serial.println(motionDetected());
+  if (detectWaterGesture()) {
+    Serial.println("BOEMSHAKALAKAAAA");
+    delay(3000);
+  }
 
-
-  return; // TODO remove this obviously
+  return;  // TODO remove this obviously
 
   switch (deviceState) {
     case IDLE:
@@ -232,7 +338,7 @@ void gestureDetectionLoop() {
       // in this state deviceTimestamp stores the last detected motion...
       if (motionDetected()) {
         deviceTimestamp = millis();
-      } else if (millis() - gracePeriod > deviceTimestamp) {
+      } else if (millis() - idleDelay > deviceTimestamp) {
         // ...and if no motion is detected for too long we go back into IDLE state
         changeDeviceState(IDLE);
         return;
@@ -263,7 +369,7 @@ void gestureDetectionLoop() {
         return;
       }
 
-      int waterCommand = detectWaterGesture();
+      waterCommand = detectWaterGesture();
       if (waterCommand) {
         if (waterCommand == 1) {
           sendWaterCommand();
