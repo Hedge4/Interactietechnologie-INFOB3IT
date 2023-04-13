@@ -55,11 +55,11 @@ bool forceRetrieveSensors;                          //force flag for command
 
 //servo definition
 int servoStartPosition = 0;                           //servo returns to starting position at start of program
-int servoWateringPosition = 180;                      //position servo should be in to get water flowing
+int servoWateringPosition = 140;                      //position servo should be in to get water flowing
 Arm myArm(servoStartPosition, servoWateringPosition);
 //servo vars
 BlockNot holdAtWateringPosition(2000);              //hold servo at watering position for this much time
-BlockNot afterWaterGracePeriod(5000);               //after giving water, set a grace period of x seconds where plant can not be given water again
+BlockNot afterWaterGracePeriod(300000);               //after giving water, set a grace period of x seconds where plant can not be given water again
 bool dispensing;                                    //if true, servo currently moving towards watering position. False -> moving towards startposition
 
 //button setup
