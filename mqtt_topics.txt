@@ -1,17 +1,21 @@
-infob3it/099/
+infob3it/099
 
 
-sensor/moisture/level	
-sensor/moisture/reading
-sensor/light/level
-sensor/light/reading
-sensor/pressure			
-sensor/temp
+/sensor/moisture/level	
+/sensor/moisture/reading
+/sensor/light/level
+/sensor/light/reading
+/sensor/pressure			
+/sensor/temp
 
-commands
+/commands
 
-errors 
+/errors 
 
-status/gesture_controll
+/status/plant_drizzler
+/status/gesture_controller
 
-mode/plant_drizzler
+
+/mode/plant_drizzler
+/mode/gesture_controller
+

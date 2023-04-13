@@ -12,8 +12,17 @@ PubSubClient client(espClient);
 const String statusTopic = String(MQTT_TOPIC_PREFIX) + "/status/plant_drizzler";
 const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 
-//check for command topic
-String commandTopic = String(MQTT_TOPIC_PREFIX) + "/commands";
+//hardcoded topic strings
+String commandTopicPrefixed = String(MQTT_TOPIC_PREFIX) +"/commands";
+String modeTopic            = "/mode/plant_drizzler";
+String modeTopicPrefixed    = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler";
+String moistReadingTopic    = "/sensor/moisture/reading";
+String moistLevelTopic      = "/sensor/moisture/level";
+String lightReadingTopic    = "/sensor/light/reading";
+String lightLevelTopic      = "/sensor/light/level";
+String pressureTopic        = "/sensor/pressure";
+String temperatureTopic     = "/sensor/temperature";
+
 
 /* ========================
   ===     FUNCTIONS     ===
@@ -34,9 +43,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
   //decide what to do based on topic
   //convert char* to string
   String inTopic = topic;
-  if(inTopic == commandTopic){
+  if(inTopic == commandTopicPrefixed){
     //command payloads should be single byte
     performCommand(payload[0]);
+  }
+  else if(inTopic == modeTopicPrefixed){
+    performModeToggle(payload[0]);
   }
 
   
@@ -98,9 +110,27 @@ void setupMqtt() {
   client.setKeepAlive(60);
 }
 
-void sendMessage(const char *payload, String topic) {
+// sendMessage but with a default topic
+void sendMessage(const char *payload, bool retain) { 
+  sendMessage(payload, nullptr, retain); 
+
+  // alternative method I decided to use at first 
+  // const char* topic = new char[1]; 
+  // topic[0] = '\0'; 
+  // sendMessage(payload, topic); 
+  // delete topic;
+
+  // another alternative method 
+  // static const char* emptyTopic = ""; 
+  // sendMessage(payload, emptyTopic); 
+
+  // the last, and probably simplest approach is a default value 
+  // for topic in the method below. But I already wrote these...
+}
+
+void sendMessage(const char *payload, const char *topic, bool retain) {
   String fullTopic = String(MQTT_TOPIC_PREFIX) + topic;
-  client.publish(fullTopic.c_str(), payload);
+  client.publish(fullTopic.c_str(), payload, retain);
 }
 
 
