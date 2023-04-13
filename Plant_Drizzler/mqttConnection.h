@@ -16,7 +16,8 @@ boolean mqttLoop();
 void sendMessage(const char *payload, bool retain = false);
 void sendMessage(const char* message, const char *topic, bool retain = false);
 
-extern String modeTopic,          commandTopic, 
+extern String modeTopic,          modeSmartTopic,
+              commandTopic, 
               moistReadingTopic,  moistLevelTopic, 
               lightReadingTopic,  lightLevelTopic,
               pressureTopic,      temperatureTopic,

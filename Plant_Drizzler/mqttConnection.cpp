@@ -13,16 +13,18 @@ const String statusTopic = String(MQTT_TOPIC_PREFIX) + "/status/plant_drizzler";
 const String subscribeTopic = String(MQTT_TOPIC_PREFIX) + "/#";
 
 //hardcoded topic strings
-String commandTopicPrefixed = String(MQTT_TOPIC_PREFIX) +"/commands";
-String modeTopicPrefixed    = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler";
-String modeTopic            = "/mode/plant_drizzler";
-String moistReadingTopic    = "/sensor/moisture/reading";
-String moistLevelTopic      = "/sensor/moisture/level";
-String lightReadingTopic    = "/sensor/light/reading";
-String lightLevelTopic      = "/sensor/light/level";
-String pressureTopic        = "/sensor/pressure";
-String temperatureTopic     = "/sensor/temperature";
-String lastWateredTopic     = "/last_watered";
+String commandTopicPrefixed       = String(MQTT_TOPIC_PREFIX) +"/commands";
+String modeTopicPrefixed          = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler/automated";
+String modeSmartTopicPrefixed     = String(MQTT_TOPIC_PREFIX) +"/mode/plant_drizzler/experimental";
+String modeTopic                  = "/mode/plant_drizzler/automated";
+String modeSmartTopic             = "/mode/plant_drizzler/experimental";
+String moistReadingTopic          = "/sensor/moisture/reading";
+String moistLevelTopic            = "/sensor/moisture/level";
+String lightReadingTopic          = "/sensor/light/reading";
+String lightLevelTopic            = "/sensor/light/level";
+String pressureTopic              = "/sensor/pressure";
+String temperatureTopic           = "/sensor/temperature";
+String lastWateredTopic           = "/last_watered";
 
 
 /* ========================
@@ -50,6 +52,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   else if(inTopic == modeTopicPrefixed){
     performModeToggle(payload[0]);
+  }
+  else if(inTopic == modeSmartTopicPrefixed){
+    performExperimentalToggle(payload[0]);
   }
 
   

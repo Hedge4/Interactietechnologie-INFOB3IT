@@ -27,6 +27,9 @@ int menuState;
 //determine if device is in automatic mode or not
 bool automaticMode;
 
+//experimental mode in which water is given automatically based on more sensor values
+bool experimentalMode;
+
 //timers
 int moistIntervalLong = 5000;                       //normal moisture interval
 int moistIntervalShort = 300;                       //shortened moisture interval just after giving water (NOT shorter than moistReadBuffer!)
@@ -39,8 +42,11 @@ BlockNot publishSensorsInterval(20000);              //interval at which all sen
 //plant watering vars
 int moistLevelThreshold = 2;                        //if soil gets below moistness 2, apply water
 bool givingWater;                                   //indicator that machine is in water giving state
-float lastWatered;                          //remember when last given water
+float lastWatered;                                  //remember when last given water
 bool forceGiveWater;                                //for manual mode, gives signal that water must be given in this cycle
+int lightLevelThreshold = 2;                        //for experimental mode, only water in darkness
+float tempThresholdLow = 15.0;                      //for experimental mode, only water when above and below certain temp
+float tempThresholdHigh = 25.0;                     //for experimental mode, only water when above and below certain temp
 
 //retrieve sensor command vars
 BlockNot forceSensorsInterval(500);                 //short interval after which command is displayed in which moist sensor data can be refreshed
@@ -167,7 +173,14 @@ void waterLoop(){
     ) ||
       ( forceGiveWater                         //manual watering command
     &&  !givingWater                           //only issue water commands while no watering is in process
-    )
+    ) ||
+      ( automaticMode
+    &&  experimentalMode                       //experimental mode automated watering
+    &&  moistLevel < moistLevelThreshold    
+    &&  lightLevel < lightLevelThreshold       //dont water in full sunlight
+    &&  tempReading > tempThresholdLow         //dont water when too cold
+    &&  tempReading < tempThresholdHigh        //or hot
+    )             
     ){
     //prepare to give water
     givingWater = true;
@@ -234,6 +247,8 @@ void toggleAutomatic(bool mode){
     automaticMode = false;
     //change light
     digitalWrite(ledPin, HIGH);
+    //turn off smarter automatic mode
+    sendMessage(TOGGLE_FALSE_PUBLISH, modeSmartTopic.c_str(), true);
   }
 }
 
@@ -272,6 +287,22 @@ void performModeToggle(char mode){
       break;
     case(TOGGLE_FALSE_RECEIVE):
       toggleAutomatic(false);
+      break;      
+  }
+}
+
+void performExperimentalToggle(char mode){
+  switch(mode){
+    case(TOGGLE_TRUE_RECEIVE):
+      if(!automaticMode){
+        //cant go to experimental if in manual
+        sendMessage(TOGGLE_FALSE_PUBLISH, modeSmartTopic.c_str(), true);
+        return;
+      }     
+      experimentalMode = true;
+      break;
+    case(TOGGLE_FALSE_RECEIVE):
+      experimentalMode = false;
       break;      
   }
 }
