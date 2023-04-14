@@ -19,18 +19,15 @@ BlockNot pingInterval(15000);
   ========================= */
 
 void sendWaterCommand() {
-  Serial.println(F("water"));
-  // TODO
+  Serial.println(F("0"));
 }
 
 void sendMoreWaterCommand() {
-  Serial.println(F("more_water"));
-  // TODO
+  Serial.println(F("1"));
 }
 
 void sendRefreshCommand() {
-  Serial.println(F("refresh"));
-  // TODO
+  Serial.println(F("2"));
 }
 
 
