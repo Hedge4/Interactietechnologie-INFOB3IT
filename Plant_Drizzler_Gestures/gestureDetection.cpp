@@ -12,7 +12,7 @@
 #define DETECTING 3   // Detecting which gesture was used
 #define DETECTED 4    // Finished detecting a gesture, in grace period
 
-int deviceState = DETECTING;  // TODO set to IDLE
+int deviceState = IDLE;
 unsigned long deviceTimestamp = 0;
 
 int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED
@@ -49,8 +49,11 @@ int refreshEndValue;
 int waterDetectionState;
 int waterStartValue;
 int waterHalfwayValue;
+int waterEndValue;
+int waterFirstPosition;               // stores which rotation the user used first for the water gesture (other one becomes halfway point)
 unsigned long waterGesturetimestamp;  // to store how long someone keeps the halfway position
-int moreWaterDelay = 2000;            // how long a user should hold the gesture to give more water
+const int moreWaterDelay = 3000;      // how long a user should hold the gesture to give more water
+const int waterResetDelay = 10000;    // how long a user can be at the halfway point before the gesture resets
 int waterCommand;                     // give the result if someone kept position for a short/long time
 
 
@@ -89,7 +92,7 @@ void changeDeviceState(int newState) {
         ledState = true;
         // reset variables used in DETECTING state
         refreshDetectionState = refreshStartValue = refreshMoveValue = refreshEndValue = 0;
-        // TODO change variables from detecting to 0
+        waterDetectionState = waterStartValue = waterHalfwayValue = waterEndValue = 0;
         break;
 
       case DETECTED:
@@ -139,6 +142,7 @@ boolean detectInitialisation() {
   // hand needs to be stable before we start detecting the actual required movement for this gesture
   if (initDetectionState == 0 || initDetectionState == 1) {
     if (abs(lastAccX) < 4000 && abs(lastAccY) < 4000 && abs(lastAccZ) < 5000) {
+      // increase twice as fast as decrease to combat false negatives
       initStartValue = initStartValue < 25 ? initStartValue + 2 : 26;  // max value 26
     } else {
       initStartValue = --initStartValue < 0 ? 0 : initStartValue;
@@ -156,6 +160,7 @@ boolean detectInitialisation() {
   // detect the actual movement for this gesture
   if (initDetectionState == 1 || initDetectionState == 2) {
     if (abs(lastAccX) > 6000 && abs(lastAccZ) > 3000 && abs(lastPitch) > 20) {
+      // increase twice as fast as decrease to combat false negatives
       initMoveValue = initMoveValue < 13 ? initMoveValue + 3 : 15;  // max value 15
     } else {
       initMoveValue = --initMoveValue < 0 ? 0 : initMoveValue;
@@ -182,8 +187,8 @@ boolean detectInitialisation() {
         return true;  // no need to reset any variables, state change does that
       } else {
         // not detected if hand ends in different position
-        initMoveValue = 0;
         initStartValue = initEndValue;
+        initMoveValue = 0;
         initEndValue = 0;
         initDetectionState = 0;
       }
@@ -202,6 +207,7 @@ boolean detectRefreshGesture() {
   // we need enough stable ticks before we start detecting the required movement for this gesture
   if (refreshDetectionState == 0 || refreshDetectionState == 1) {
     if (avgAccX < 2000 && avgAccY < 2000 && avgAccZ < 2500) {
+      // increase twice as fast as decrease to combat false negatives
       refreshStartValue = refreshStartValue < 25 ? refreshStartValue + 2 : 26;  // max value 26
     } else {
       refreshStartValue = --refreshStartValue < 0 ? 0 : refreshStartValue;
@@ -219,6 +225,7 @@ boolean detectRefreshGesture() {
   // we want to detect strong sideways acceleration (or deceleration) for at least 4 ticks
   if (refreshDetectionState == 1 || refreshDetectionState == 2) {
     if (avgAccY > 3000) {
+      // increase twice as fast as decrease to combat false negatives
       refreshMoveValue = refreshMoveValue < 11 ? refreshMoveValue + 2 : 12;  // max value 12
     } else {
       refreshMoveValue = --refreshMoveValue < 0 ? 0 : refreshMoveValue;
@@ -245,8 +252,8 @@ boolean detectRefreshGesture() {
         return true;  // no need to reset any variables, state change does that
       } else {
         // not detected if hand ends in different position
-        refreshMoveValue = 0;
         refreshStartValue = refreshEndValue;
+        refreshMoveValue = 0;
         refreshEndValue = 0;
         refreshDetectionState = 0;
       }
@@ -280,20 +287,6 @@ bool checkArrayTrend(float *values, int length, int startIndex, bool checkGoingU
 
 // arm can be rotated 90 degrees clockwise or counter clockwise
 int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ, float lastRoll) {
-  // if ( avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 12000
-  //   && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 4000
-  // ) { Serial.println("COND 1"); }
-
-  // if (lastRoll < -50 || (lastRoll < 50 && checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, false))
-  // ) { Serial.println("COND 2"); }
-
-  // if ( avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 14000
-  //   && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 6000
-  // ) { Serial.println("COND 3"); }
-
-  // if (lastRoll > 50 || (lastRoll > -50 && checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, true))
-  // ) { Serial.println("COND 4"); }
-
   // clockwise condition
   if (avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 12000
       && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 4000
@@ -312,13 +305,86 @@ int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ, float la
 
 // returns 1 if detected, or 2 if 'more water' gesture detected
 int detectWaterGesture() {
-  // TODO
   float lastRoll = lastRolls[lastValueIterator];
   float avgAccX = getArrayAverageAbs(lastAccXs, maxValuesStored);
   float avgAccY = getArrayAverageAbs(lastAccYs, maxValuesStored);
   float avgAccZ = getArrayAverageAbs(lastAccZs, maxValuesStored);
 
-  inWaterGesturePosition(avgAccX, avgAccY, avgAccZ, lastRoll);
+  // current position of user's hand (1 = clockwise, 2 = counter clockwise)
+  int handPosition = inWaterGesturePosition(avgAccX, avgAccY, avgAccZ, lastRoll);
+
+  // we need enough ticks with the hand in a start position before we enter the next state
+  if (waterDetectionState == 0 || waterDetectionState == 1) {
+    if (handPosition) {
+      // increase twice as fast as decrease to combat false negatives
+      waterStartValue = waterStartValue < 39 ? waterStartValue + 2 : 40;  // max value 40
+    } else {
+      waterStartValue = --waterStartValue < 0 ? 0 : waterStartValue;
+    }
+    if (waterStartValue > 10) {
+      if (waterDetectionState == 0) {
+        // only do this once since we're setting handPosition
+        waterDetectionState = 1;
+        waterFirstPosition = handPosition;
+      }
+    } else {
+      // reset if gesture wasn't fast enough
+      waterDetectionState = 0;
+      waterHalfwayValue = 0;
+      waterEndValue = 0;
+    }
+  }
+
+  // now we want at least a few ticks (no false positives) with the hand in the other position
+  if (waterDetectionState == 1 || waterDetectionState == 2) {
+    // one position is 1, other is 2. To check if this is the other position they should add up to 3
+    if (handPosition + waterFirstPosition == 3) {
+      // increase twice as fast as decrease to combat false negatives
+      waterHalfwayValue = waterHalfwayValue < 39 ? waterHalfwayValue + 2 : 40;  // max value 40
+    } else {
+      waterHalfwayValue = --waterHalfwayValue < 0 ? 0 : waterHalfwayValue;
+    }
+    if (waterHalfwayValue >= 13) {
+      if (waterDetectionState == 1) {
+        // only do this once since we're setting handPosition
+        waterDetectionState = 2;
+        waterHalfwayValue = 40;           // set to max, these three ticks were enough
+        waterGesturetimestamp = millis(); // keep track of how long user keeps this position
+      }
+    } else {
+      // end of gesture wasn't fast enough
+      waterDetectionState = 1;
+      waterEndValue = 0;
+    }
+  }
+
+  // we want at least 4 stable ticks before we finish the gesture
+  if (waterDetectionState == 2) {
+    // we can finish the gesture if the hand is back in the normal position
+    if (handPosition == waterFirstPosition) {
+      waterEndValue += 2;
+    } else {
+      waterEndValue = --waterEndValue < 0 ? 0 : waterEndValue;
+    }
+    // if endValue has increased, this also means hand is no longer in halfway position
+    if (waterEndValue >= 7) {
+      // no need to reset any variables, state change does that
+      if (millis() - moreWaterDelay > waterGesturetimestamp) {
+        // if moreWaterDelay elapsed we send the 'more water' command...
+        return 2;
+      } else {
+        // ...and if not, the normal water command
+        return 1;
+      }
+    }
+    // reset gesture if user stays in halfway point for too long
+    if (millis() - waterResetDelay > waterGesturetimestamp) {
+      waterStartValue = waterEndValue;
+      waterHalfwayValue = 0;
+      waterEndValue = 0;
+      waterDetectionState = 0;
+    }
+  }
 
   // return 0 if not detected
   return 0;
@@ -358,15 +424,7 @@ void gestureDetectionLoop() {
   // update accelerometer and gyroscope output data
   getMpuValues();
 
-
-  // TODO remove test functions
-  if (detectWaterGesture()) {
-    Serial.println("BOEMSHAKALAKAAAA");
-    delay(3000);
-  }
-
-  return;  // TODO remove this obviously
-
+  // do different detection/waiting based on the device state
   switch (deviceState) {
     case IDLE:
       // leave idle state if any motion was detected
