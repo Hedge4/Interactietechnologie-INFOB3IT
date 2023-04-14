@@ -44,6 +44,7 @@ int moistLevelThreshold = 2;                        //if soil gets below moistne
 bool givingWater;                                   //indicator that machine is in water giving state
 float lastWatered;                                  //remember when last given water
 bool forceGiveWater;                                //for manual mode, gives signal that water must be given in this cycle
+bool forceGiveTwice;                                //bool for longwater
 int lightLevelThreshold = 2;                        //for experimental mode, only water in darkness
 float tempThresholdLow = 15.0;                      //for experimental mode, only water when above and below certain temp
 float tempThresholdHigh = 25.0;                     //for experimental mode, only water when above and below certain temp
@@ -55,11 +56,12 @@ bool forceRetrieveSensors;                          //force flag for command
 
 //servo definition
 int servoStartPosition = 0;                           //servo returns to starting position at start of program
-int servoWateringPosition = 180;                      //position servo should be in to get water flowing
+int servoWateringPosition = 140;                      //position servo should be in to get water flowing
 Arm myArm(servoStartPosition, servoWateringPosition);
+
 //servo vars
 BlockNot holdAtWateringPosition(2000);              //hold servo at watering position for this much time
-BlockNot afterWaterGracePeriod(5000);               //after giving water, set a grace period of x seconds where plant can not be given water again
+BlockNot afterWaterGracePeriod(300000);               //after giving water, set a grace period of x seconds where plant can not be given water again
 bool dispensing;                                    //if true, servo currently moving towards watering position. False -> moving towards startposition
 
 //button setup
@@ -119,6 +121,7 @@ void setup() {
 
   //setup commands
   forceGiveWater = false;
+  forceGiveTwice = false;
   forceRetrieveSensors = false;
   forceSensorsInterval.stop();
 
@@ -180,6 +183,14 @@ void loop() {
     }
     else{
       warningTicks = 0;
+    }
+
+    //if need for water twice, immediately turn on forceWater again
+    if(forceGiveTwice){
+      //turn command back on again
+      forceGiveWater = true;
+      //turn flag off
+      forceGiveTwice = false;
     }
   }
 
@@ -275,7 +286,7 @@ void waterLoop(){
       afterWaterGracePeriod.start(true);  
       //shorten interval of moistsensor during grace period
       moistInterval.setDuration(moistIntervalShort);
-      //turn of forced flag if it was on
+      //turn off forced flag 
       forceGiveWater = false;
       //publish that plant has been watered
       performWateredPing();
@@ -329,6 +340,8 @@ void performCommand(char command){
       forceGiveWater = true;
       break;
     case(MORE_WATER_COMMAND):
+      forceGiveWater = true;
+      forceGiveTwice = true;
       break;
     case(REFRESH_COMMAND):
       forceRetrieveSensors = true;

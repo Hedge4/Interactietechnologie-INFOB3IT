@@ -37,13 +37,22 @@ void drawAmuxFrame(OLEDDisplay *display, OLEDDisplayUiState* state, int16_t x, i
       msgMoist = "Very Dry";
       break;
     case 1:
-      msgMoist = "Moderately Dry";
+      msgMoist = "Dry";
       break;
     case 2:
-      msgMoist = "Moderately Wet";
+      msgMoist = "Normal";
       break;
     case 3:
+      msgMoist = "Wet-ish";
+      break;
+    case 4:
+      msgMoist = "Quite Wet";
+      break;
+    case 5:
       msgMoist = "Very Wet";
+      break;
+    case 6:
+      msgMoist = "Drowning";
       break;
     default:
       msgMoist = "";

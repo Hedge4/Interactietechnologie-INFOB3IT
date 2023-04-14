@@ -27,7 +27,7 @@ void checkAmuxSensors(){
     //reading will be the running average
     moistReading = calcAverage(moistReadings);
     //convert reading to range [0..3], analog can read 1024
-    moistLevel = floor((moistReading * 4) / 1025);  
+    moistLevel = floor((moistReading * 6) / 1025);  
     //change index
     int nextIndex = moistIndex + 1;
     moistIndex = nextIndex < sizeof(moistReadings) ? nextIndex : 0; 
