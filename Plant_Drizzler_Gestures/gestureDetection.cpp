@@ -17,7 +17,7 @@ unsigned long deviceTimestamp = 0;
 
 int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED
 int idleDelay = 30000;                // delay for ACTIVATED --> IDLE
-int maxDetectionTime = 10000;         // time a user has to make their gesture in DETECTING state
+int maxDetectionTime = 20000;         // time a user has to make their gesture in DETECTING state
 boolean ledState;                     // used for blinking led
 BlockNot graceLedInterval(200);       // how fast the led blinks while awaiting state change
 BlockNot dectectionLedInterval(500);  // led blink interval in DETECTING state
@@ -63,43 +63,45 @@ int waterCommand;                     // give the result if someone kept positio
 
 // setup for when we enter a specific state
 void changeDeviceState(int newState) {
-  if (deviceState != newState) {
-    deviceTimestamp = millis();
-    deviceState = newState;
+  if (deviceState == newState) {
+    return;
+  }
 
-    Serial.print(F("Switched to deviceState "));
-    Serial.println(newState);
+  deviceTimestamp = millis();
+  deviceState = newState;
 
-    // state initialisation logic
-    switch (newState) {
-      case IDLE:
-        digitalWrite(LED_BUILTIN, LOW);
-        break;
+  Serial.print(F("Switched to deviceState "));
+  Serial.println(newState);
 
-      case ACTIVATING:
-        digitalWrite(LED_BUILTIN, HIGH);
-        ledState = true;
-        break;
+  // state initialisation logic
+  switch (newState) {
+    case IDLE:
+      digitalWrite(LED_BUILTIN, LOW);
+      break;
 
-      case ACTIVATED:
-        digitalWrite(LED_BUILTIN, LOW);
-        // reset variables used in ACTIVATED state
-        initDetectionState = initStartValue = initMoveValue = initEndValue = 0;
-        break;
+    case ACTIVATING:
+      digitalWrite(LED_BUILTIN, HIGH);
+      ledState = true;
+      break;
 
-      case DETECTING:
-        digitalWrite(LED_BUILTIN, HIGH);
-        ledState = true;
-        // reset variables used in DETECTING state
-        refreshDetectionState = refreshStartValue = refreshMoveValue = refreshEndValue = 0;
-        waterDetectionState = waterStartValue = waterHalfwayValue = waterEndValue = 0;
-        break;
+    case ACTIVATED:
+      digitalWrite(LED_BUILTIN, LOW);
+      // reset variables used in ACTIVATED state
+      initDetectionState = initStartValue = initMoveValue = initEndValue = 0;
+      break;
 
-      case DETECTED:
-        // no ledState since it's constant on instead blinking
-        digitalWrite(LED_BUILTIN, HIGH);
-        break;
-    }
+    case DETECTING:
+      digitalWrite(LED_BUILTIN, HIGH);
+      ledState = true;
+      // reset variables used in DETECTING state
+      refreshDetectionState = refreshStartValue = refreshMoveValue = refreshEndValue = 0;
+      waterDetectionState = waterStartValue = waterHalfwayValue = waterEndValue = 0;
+      break;
+
+    case DETECTED:
+      // no ledState since it's constant on instead blinking
+      digitalWrite(LED_BUILTIN, HIGH);
+      break;
   }
 }
 
@@ -413,9 +415,9 @@ void storeMpuValues(float roll, float pitch, float yaw, float accX, float accY, 
   ======================= */
 
 void gestureDetectionLoop() {
-  // limit how often the MPU is read and data is interpreted
+  // in idle state we don't need to be as active
   if (deviceState == IDLE) {
-    // in idle state we don't need to be as active
+    // limit how often the MPU6050 is read and data is interpreted
     if (!mpuIdleLoopInterval.triggered()) return;
   } else {
     if (!mpuLoopInterval.triggered()) return;
@@ -441,7 +443,7 @@ void gestureDetectionLoop() {
       }
       // quickly blink Arduino led while 'activating'
       if (graceLedInterval.triggered()) {
-        ledState != ledState;
+        ledState = !ledState;
         digitalWrite(LED_BUILTIN, ledState);
       }
       break;
@@ -450,7 +452,7 @@ void gestureDetectionLoop() {
       // in this state deviceTimestamp stores the last detected motion...
       if (motionDetected()) {
         deviceTimestamp = millis();
-      } else if (millis() - idleDelay > deviceTimestamp) {
+      } else if (millis() - idleDelay > deviceTimestamp && millis() >= idleDelay) {
         // ...and if no motion is detected for too long we go back into IDLE state
         changeDeviceState(IDLE);
         return;
@@ -472,7 +474,7 @@ void gestureDetectionLoop() {
 
       // after recognising initialisatino gesture, slowly blink to show we're detecting now
       if (dectectionLedInterval.triggered()) {
-        ledState != ledState;
+        ledState = !ledState;
         digitalWrite(LED_BUILTIN, ledState);
       }
 
