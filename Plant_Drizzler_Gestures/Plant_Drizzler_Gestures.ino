@@ -40,7 +40,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  // for logging purposes
+  // to communicate with node-red
   Serial.begin(9600);
 
   // mpuConnectionSetup();
@@ -48,6 +48,9 @@ void setup() {
 
   // disable setup led
   digitalWrite(LED_BUILTIN, LOW);
+
+  // send online status
+  Serial.println(F("ping"));
 }
 
 

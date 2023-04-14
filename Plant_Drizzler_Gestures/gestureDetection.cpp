@@ -15,7 +15,7 @@
 int deviceState = IDLE;
 unsigned long deviceTimestamp = 0;
 
-int gracePeriod = 5000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED
+int gracePeriod = 10000;               // delay for ACTIVATING --> ACTIVATED or DETECTED --> ACTIVATED
 int idleDelay = 30000;                // delay for ACTIVATED --> IDLE
 int maxDetectionTime = 20000;         // time a user has to make their gesture in DETECTING state
 boolean ledState;                     // used for blinking led
@@ -228,18 +228,22 @@ boolean detectRefreshGesture() {
   if (refreshDetectionState == 1 || refreshDetectionState == 2) {
     if (avgAccY > 3000) {
       // increase twice as fast as decrease to combat false negatives
-      refreshMoveValue = refreshMoveValue < 11 ? refreshMoveValue + 2 : 12;  // max value 12
+      refreshMoveValue = refreshMoveValue < 15 ? refreshMoveValue + 2 : 16;  // max value 16
     } else {
       refreshMoveValue = --refreshMoveValue < 0 ? 0 : refreshMoveValue;
     }
     if (refreshMoveValue >= 8) {
-      refreshDetectionState = 2;
-    } else if (refreshMoveValue < 3) {
+      if (refreshDetectionState == 1) {
+        // we've been in state 1 for long enough so set to maximum and start detecting state 2
+        refreshDetectionState = 2;
+        refreshMoveValue = 16;
+      }
+    } else if (refreshMoveValue < 1) {
       refreshEndValue = 0;
     }
   }
 
-  // we want at least 3 stable ticks before refreshMoveValue goes too far back down (in 6-10 ticks)
+  // we want at least 3 stable ticks before refreshMoveValue goes too far back down (in ~10 ticks)
   if (refreshDetectionState == 2) {
     // don't use pitch here since it doesn't go back to 0 fast enough
     if (avgAccX < 2000 && avgAccY < 2000 && avgAccZ < 2500) {
@@ -466,7 +470,7 @@ void gestureDetectionLoop() {
 
     case DETECTING:
       // if no gesture was found for too long, go back to ACTIVATED state
-      if (millis() - maxDetectionTime > deviceTimestamp) {
+      if (millis() - maxDetectionTime > deviceTimestamp && millis() >= maxDetectionTime) {
         // and if no motion is detected for too long we go back into IDLE state
         changeDeviceState(ACTIVATED);
         return;
@@ -480,6 +484,7 @@ void gestureDetectionLoop() {
 
       if (detectRefreshGesture()) {
         sendRefreshCommand();
+        changeDeviceState(DETECTED);
         return;
       }
 
@@ -490,6 +495,7 @@ void gestureDetectionLoop() {
         } else if (waterCommand == 2) {
           sendMoreWaterCommand();
         }
+        changeDeviceState(DETECTED);
       }
       break;
 
