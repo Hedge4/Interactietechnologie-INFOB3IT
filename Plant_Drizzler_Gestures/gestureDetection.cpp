@@ -46,9 +46,11 @@ int refreshMoveValue;
 int refreshEndValue;
 
 // watering (rotate arm 180 degrees and back) detection variables
+int waterDetectionState;
 int waterStartValue;
 int waterHalfwayValue;
 unsigned long waterGesturetimestamp;  // to store how long someone keeps the halfway position
+int moreWaterDelay = 2000;            // how long a user should hold the gesture to give more water
 int waterCommand;                     // give the result if someone kept position for a short/long time
 
 
@@ -254,10 +256,56 @@ boolean detectRefreshGesture() {
   return false;
 }
 
-int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ) {
+bool checkArrayTrend(float *values, int length, int startIndex, bool checkGoingUp) {
+  int count = 0;
+  // startIndex - length + 1 since startIndex is the newest value and has no next value
+  // we're counting down since we want to go in the opposite direction as adding new values
+  for (int i = startIndex; i > startIndex - length + 1; i--) {
+    // add length to i and then use modulo since we're counting down instead of up
+    float currentValue = values[(i + length) % length];
+    float previousValue = values[(i - 1 + length) % length];
+    if (checkGoingUp) {
+      if (currentValue > previousValue) {
+        count++;
+      }
+    } else {
+      if (currentValue < previousValue) {
+        count++;
+      }
+    }
+  }
+  // return true if two thirds of values are indeed going up/down
+  return count >= length * 2 / 3;
+}
 
-  
-  
+// arm can be rotated 90 degrees clockwise or counter clockwise
+int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ, float lastRoll) {
+  // if ( avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 12000
+  //   && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 4000
+  // ) { Serial.println("COND 1"); }
+
+  // if (lastRoll < -50 || (lastRoll < 50 && checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, false))
+  // ) { Serial.println("COND 2"); }
+
+  // if ( avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 14000
+  //   && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 6000
+  // ) { Serial.println("COND 3"); }
+
+  // if (lastRoll > 50 || (lastRoll > -50 && checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, true))
+  // ) { Serial.println("COND 4"); }
+
+  // clockwise condition
+  if (avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 12000
+      && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 4000
+      // check if roll is either already low or going down
+      && (lastRoll < -50 || checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, false))) { return 1; }
+
+  // counter clockwise condition
+  if (avgAccX < 2500 && avgAccY < 9000 && avgAccZ < 14000
+      && avgAccX > 0 && avgAccY > 5000 && avgAccZ > 6000
+      // check if roll is either already high or going up
+      && (lastRoll > 50 || checkArrayTrend(lastRolls, maxValuesStored, lastValueIterator, true))) { return 2; }
+
   // if not in position return false
   return 0;
 }
@@ -265,6 +313,12 @@ int inWaterGesturePosition(float avgAccX, float avgAccY, float avgAccZ) {
 // returns 1 if detected, or 2 if 'more water' gesture detected
 int detectWaterGesture() {
   // TODO
+  float lastRoll = lastRolls[lastValueIterator];
+  float avgAccX = getArrayAverageAbs(lastAccXs, maxValuesStored);
+  float avgAccY = getArrayAverageAbs(lastAccYs, maxValuesStored);
+  float avgAccZ = getArrayAverageAbs(lastAccZs, maxValuesStored);
+
+  inWaterGesturePosition(avgAccX, avgAccY, avgAccZ, lastRoll);
 
   // return 0 if not detected
   return 0;

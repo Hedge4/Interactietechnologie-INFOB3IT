@@ -100,15 +100,15 @@ void getMpuValues() {
   // Serial.print("accZ:");
   // Serial.println(accZ);
 
-  Serial.print("correctedAccX:");
-  Serial.print(correctedAccX);
-  Serial.print(",");
-  Serial.print("correctedAccY:");
-  Serial.print(correctedAccY);
-  Serial.print(",");
-  Serial.print("correctedAccZ:");
-  Serial.println(correctedAccZ);
-  Serial.print(",");
+  // Serial.print("correctedAccX:");
+  // Serial.print(correctedAccX);
+  // Serial.print(",");
+  // Serial.print("correctedAccY:");
+  // Serial.print(correctedAccY);
+  // Serial.print(",");
+  // Serial.print("correctedAccZ:");
+  // Serial.println(correctedAccZ);
+  // Serial.print(",");
 
   // Serial.print("accAngleX:");
   // Serial.print(accAngleX);
@@ -125,14 +125,14 @@ void getMpuValues() {
   // Serial.print("gyroZ:");
   // Serial.println(gyroZ);
 
-  Serial.print("roll:");
-  Serial.print(roll);
-  Serial.print(",");
-  Serial.print("pitch:");
-  Serial.print(pitch);
-  Serial.print(",");
-  Serial.print("yaw:");
-  Serial.println(yaw);
+  // Serial.print("roll:");
+  // Serial.print(roll);
+  // Serial.print(",");
+  // Serial.print("pitch:");
+  // Serial.print(pitch);
+  // Serial.print(",");
+  // Serial.print("yaw:");
+  // Serial.println(yaw);
 
   // Serial.print("speedX:");
   // Serial.print(speedX);
